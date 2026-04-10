@@ -8,10 +8,11 @@ if [[ $# -ne 1 ]]; then
 fi
 
 version="$1"
-rockspec_path="Sonoran.lua-${version}-1.rockspec"
+package_name="sonoran.lua"
+rockspec_path="${package_name}-${version}-1.rockspec"
 
 cat > "$rockspec_path" <<EOF
-package = "Sonoran.lua"
+package = "${package_name}"
 version = "${version}-1"
 
 source = {
