@@ -1,10 +1,12 @@
 # Sonoran.lua
 
-`Sonoran.lua` is a FiveM-first Lua SDK for Sonoran CAD v2 endpoints. This first release only covers the CAD `/v2` API surface and keeps the public method names aligned with `Sonoran.js`.
+`Sonoran.lua` is a Lua SDK for Sonoran CAD v2 endpoints with shared client code for FiveM and Roblox runtimes.
 
 ## Installation
 
-Install the package from LuaRocks:
+### FiveM
+
+Install from LuaRocks:
 
 ```sh
 luarocks install sonoran.lua
@@ -13,7 +15,7 @@ luarocks install sonoran.lua
 LuaRocks package:
 [sonoran.lua on LuaRocks](https://luarocks.org/modules/sonoransoftware/sonoran.lua)
 
-If you are loading it as a FiveM resource, add this resource to your server and start it before resources that consume it.
+Or use the generated FiveM resource release asset and start it before resources that consume it.
 
 ```cfg
 ensure Sonoran.lua
@@ -33,12 +35,39 @@ server_scripts {
 dependency 'Sonoran.lua'
 ```
 
+### Roblox
+
+Install from Wally:
+
+```toml
+[dependencies]
+Sonoran = "sonoransoftware/sonoran-roblox@^0.1.0"
+```
+
+Then require the package module:
+
+```lua
+local Sonoran = require(ReplicatedStorage.Packages.Sonoran)
+```
+
 ## Usage
 
-Create a client instance through the exported constructor:
+FiveM resource usage:
 
 ```lua
 local sonoran = exports["Sonoran.lua"]:createClient({
+  apiKey = "your-cad-api-key",
+  communityId = "your-community-id",
+  apiUrl = "https://api.sonorancad.com",
+  defaultServerId = 1,
+  timeoutMs = 30000
+})
+```
+
+Roblox usage:
+
+```lua
+local sonoran = Sonoran.createClient({
   apiKey = "your-cad-api-key",
   communityId = "your-community-id",
   apiUrl = "https://api.sonorancad.com",
@@ -199,6 +228,6 @@ end
 
 ## Notes
 
-- This version is server-side FiveM only.
-- The transport layer is adapter-backed internally; the shipped adapter uses `PerformHttpRequest`, `promise.new()`, and `Citizen.Await`.
+- FiveM uses `PerformHttpRequest`, `promise.new()`, and `Citizen.Await`.
+- Roblox uses `HttpService:RequestAsync()`.
 - Radio, CMS, and legacy CAD endpoints are intentionally out of scope for this initial port.

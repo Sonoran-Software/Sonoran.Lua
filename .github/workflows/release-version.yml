@@ -35,8 +35,9 @@ jobs:
       - name: Install Lua and LuaRocks
         run: |
           sudo apt-get update
-          sudo apt-get install -y lua5.4 luarocks zip
+          sudo apt-get install -y lua5.4 luarocks zip cargo
           luarocks install --local dkjson
+          cargo install --locked wally --version 0.3.2
 
       - name: Ensure master branch
         run: |
@@ -61,6 +62,18 @@ jobs:
           ROCKSPEC_PATH="$(./scripts/write-rockspec.sh "${{ steps.version.outputs.version }}")"
           echo "path=$ROCKSPEC_PATH" >> "$GITHUB_OUTPUT"
 
+      - name: Build FiveM resource
+        id: fivem
+        run: |
+          ARCHIVE_PATH="$(./scripts/build-fivem-resource.sh "${{ steps.version.outputs.version }}")"
+          echo "archive=$ARCHIVE_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Build Roblox package
+        id: roblox
+        run: |
+          PACKAGE_DIR="$(./scripts/build-roblox-package.sh "${{ steps.version.outputs.version }}")"
+          echo "dir=$PACKAGE_DIR" >> "$GITHUB_OUTPUT"
+
       - name: Commit version bump and tag
         run: |
           git config user.name "github-actions[bot]"
@@ -77,3 +90,16 @@ jobs:
           LUA_CPATH: /home/runner/.luarocks/lib/lua/5.1/?.so;;
         run: |
           luarocks upload "${{ steps.rockspec.outputs.path }}" --api-key="$LUAROCKS_API"
+
+      - name: Publish Roblox package
+        env:
+          WALLY_AUTH_TOKEN: ${{ secrets.WALLY_AUTH_TOKEN }}
+        run: |
+          cd "${{ steps.roblox.outputs.dir }}"
+          /home/runner/.cargo/bin/wally publish --token "$WALLY_AUTH_TOKEN"
+
+      - name: Upload FiveM release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          files: ${{ steps.fivem.outputs.archive }}

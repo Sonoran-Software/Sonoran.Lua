@@ -1,0 +1,13 @@
+{
+  "name": "SonoranRoblox",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Packages": {
+        "Sonoran": {
+          "$path": "src"
+        }
+      }
+    }
+  }
+}
