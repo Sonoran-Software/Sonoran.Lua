@@ -41,7 +41,7 @@ Install from Wally:
 
 ```toml
 [dependencies]
-Sonoran = "sonoran-software/sonoran-lua@^0.1.0"
+Sonoran = "sonoranbrian/sonoran-lua@^0.1.0"
 ```
 
 Then require the package module:

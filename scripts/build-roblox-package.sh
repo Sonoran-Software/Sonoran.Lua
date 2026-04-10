@@ -17,7 +17,7 @@ cp "$root_dir/README.md" "$output_dir/README.md"
 
 cat > "$output_dir/wally.toml" <<EOF
 [package]
-name = "sonoran-software/sonoran-lua"
+name = "sonoranbrian/sonoran-lua"
 description = "Sonoran CAD v2 client for Roblox"
 version = "${version}"
 license = "PolyForm-Noncommercial-1.0.0"
