@@ -36,6 +36,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y lua5.4 luarocks zip
+          luarocks install dkjson
 
       - name: Ensure master branch
         run: |
