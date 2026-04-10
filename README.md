@@ -31,12 +31,9 @@ Create a client instance through the exported constructor:
 ```lua
 local sonoran = exports["Sonoran.lua"]:createClient({
   apiKey = "your-cad-api-key",
-  communityId = "optional-community-id",
+  communityId = "your-community-id",
   apiUrl = "https://api.sonorancad.com",
   defaultServerId = 1,
-  headers = {
-    ["X-Request-Source"] = "my-resource"
-  },
   timeoutMs = 30000
 })
 ```
