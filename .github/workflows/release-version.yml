@@ -1,0 +1,65 @@
+name: Release Sonoran.lua
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump type
+        required: true
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sonoran-lua-release-version
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.event_name != 'push' || github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure master branch
+        run: |
+          if [ "${GITHUB_REF_NAME}" != "master" ]; then
+            echo "Releases must be run from the master branch."
+            exit 1
+          fi
+
+      - name: Bump package version
+        id: version
+        run: |
+          BUMP_TYPE="${{ github.event.inputs.bump }}"
+          if [ -z "$BUMP_TYPE" ]; then
+            BUMP_TYPE="patch"
+          fi
+          VERSION="$(./scripts/bump-version.sh "$BUMP_TYPE")"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Generate rockspec
+        id: rockspec
+        run: |
+          ROCKSPEC_PATH="$(./scripts/write-rockspec.sh "${{ steps.version.outputs.version }}")"
+          echo "path=$ROCKSPEC_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Commit version bump and tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add fxmanifest.lua "${{ steps.rockspec.outputs.path }}"
+          git commit -m "release: v${{ steps.version.outputs.version }}"
+          git tag "v${{ steps.version.outputs.version }}"
+          git push origin HEAD:master --follow-tags

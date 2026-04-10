@@ -1,0 +1,43 @@
+name: Publish Sonoran.lua to LuaRocks
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sonoran-lua-luarocks-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Lua and LuaRocks
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.4 luarocks zip
+
+      - name: Resolve release version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "rockspec=Sonoran.lua-${VERSION}-1.rockspec" >> "$GITHUB_OUTPUT"
+
+      - name: Verify rockspec exists
+        run: |
+          test -f "${{ steps.version.outputs.rockspec }}"
+
+      - name: Publish to LuaRocks
+        env:
+          LUAROCKS_API: ${{ secrets.LUAROCKS_API }}
+        run: |
+          luarocks upload "${{ steps.version.outputs.rockspec }}" --api-key="$LUAROCKS_API"
