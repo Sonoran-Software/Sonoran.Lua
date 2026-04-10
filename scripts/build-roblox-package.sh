@@ -20,12 +20,14 @@ cat > "$output_dir/wally.toml" <<EOF
 name = "sonoransoftware/sonoran-roblox"
 description = "Sonoran CAD v2 client for Roblox"
 version = "${version}"
-license = "UNLICENSED"
+license = "PolyForm-Noncommercial-1.0.0"
 authors = ["Sonoran Software"]
 realm = "shared"
 registry = "https://github.com/UpliftGames/wally-index"
 repository = "https://github.com/Sonoran-Software/Sonoran.Lua"
 include = ["default.project.json", "README.md", "src"]
 EOF
+
+cp "$root_dir/LICENSE" "$output_dir/LICENSE"
 
 printf '%s\n' "$output_dir"

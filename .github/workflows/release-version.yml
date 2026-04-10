@@ -96,7 +96,8 @@ jobs:
           WALLY_AUTH_TOKEN: ${{ secrets.WALLY_AUTH_TOKEN }}
         run: |
           cd "${{ steps.roblox.outputs.dir }}"
-          /home/runner/.cargo/bin/wally publish --token "$WALLY_AUTH_TOKEN"
+          /home/runner/.cargo/bin/wally login --token "$WALLY_AUTH_TOKEN"
+          /home/runner/.cargo/bin/wally publish
 
       - name: Upload FiveM release asset
         uses: softprops/action-gh-release@v2
