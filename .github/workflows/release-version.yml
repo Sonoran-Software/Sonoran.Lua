@@ -32,6 +32,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install Lua and LuaRocks
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.4 luarocks zip
+
       - name: Ensure master branch
         run: |
           if [ "${GITHUB_REF_NAME}" != "master" ]; then
@@ -63,3 +68,9 @@ jobs:
           git commit -m "release: v${{ steps.version.outputs.version }}"
           git tag -a "v${{ steps.version.outputs.version }}" -m "v${{ steps.version.outputs.version }}"
           git push origin HEAD:master "v${{ steps.version.outputs.version }}"
+
+      - name: Publish to LuaRocks
+        env:
+          LUAROCKS_API: ${{ secrets.LUAROCKS_API }}
+        run: |
+          luarocks upload "${{ steps.rockspec.outputs.path }}" --api-key="$LUAROCKS_API"
