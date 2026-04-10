@@ -7,25 +7,13 @@ end
 return function()
   return {
     encode = function(value)
-      if not json or not json.encode then
-        error("FiveM json.encode is required.")
-      end
-
       return json.encode(value)
     end,
     decode = function(value)
-      if not json or not json.decode then
-        error("FiveM json.decode is required.")
-      end
-
       return json.decode(value)
     end,
     encodeURIComponent = encode_uri_component,
     request = function(options)
-      if not PerformHttpRequest then
-        error("PerformHttpRequest is required in the FiveM runtime.")
-      end
-
       local deferred = promise.new()
       local settled = false
       local timeout_ms = tonumber(options.timeoutMs) or 30000

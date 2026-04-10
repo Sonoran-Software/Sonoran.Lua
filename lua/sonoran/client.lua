@@ -198,10 +198,6 @@ function Client:_request(method, path, options)
   }
 end
 
-local function define_method(target, name, implementation)
-  target[name] = implementation
-end
-
 local function create_client(config, adapter)
   if type(adapter) ~= "table" then
     error("An adapter instance is required.")
@@ -223,7 +219,7 @@ local function create_client(config, adapter)
     }
   }, Client)
 
-  define_method(instance, "getLoginPageV2", function(self, params)
+  instance.getLoginPageV2 = function(self, params)
     params = params or {}
     return self:_request("GET", "v2/general/login-page", {
       authenticated = false,
@@ -232,126 +228,126 @@ local function create_client(config, adapter)
         communityId = params.communityId or self._config.communityId
       }
     })
-  end)
+  end
 
-  define_method(instance, "checkApiIdV2", function(self, api_id)
+  instance.checkApiIdV2 = function(self, api_id)
     return self:_request("GET", "v2/general/api-ids/" .. self:_encode_path_segment(api_id))
-  end)
-  define_method(instance, "applyPermissionKeyV2", function(self, data)
+  end
+  instance.applyPermissionKeyV2 = function(self, data)
     return self:_request("POST", "v2/general/permission-keys/applications", { body = data })
-  end)
-  define_method(instance, "banUserV2", function(self, data)
+  end
+  instance.banUserV2 = function(self, data)
     return self:_request("POST", "v2/general/account-bans", { body = data })
-  end)
-  define_method(instance, "setPenalCodesV2", function(self, codes)
+  end
+  instance.setPenalCodesV2 = function(self, codes)
     return self:_request("PUT", "v2/general/penal-codes", { body = { codes = codes } })
-  end)
-  define_method(instance, "setApiIdsV2", function(self, data)
+  end
+  instance.setApiIdsV2 = function(self, data)
     return self:_request("PUT", "v2/general/api-ids", { body = data })
-  end)
-  define_method(instance, "getTemplatesV2", function(self, record_type_id)
+  end
+  instance.getTemplatesV2 = function(self, record_type_id)
     if record_type_id ~= nil then
       self:_assert_positive_integer(record_type_id, "recordTypeId")
       return self:_request("GET", "v2/general/templates/" .. tostring(record_type_id))
     end
     return self:_request("GET", "v2/general/templates")
-  end)
-  define_method(instance, "createRecordV2", function(self, data)
+  end
+  instance.createRecordV2 = function(self, data)
     return self:_request("POST", "v2/general/records", { body = data })
-  end)
-  define_method(instance, "updateRecordV2", function(self, record_id, data)
+  end
+  instance.updateRecordV2 = function(self, record_id, data)
     self:_assert_positive_integer(record_id, "recordId")
     return self:_request("PATCH", "v2/general/records/" .. tostring(record_id), { body = data })
-  end)
-  define_method(instance, "removeRecordV2", function(self, record_id)
+  end
+  instance.removeRecordV2 = function(self, record_id)
     self:_assert_positive_integer(record_id, "recordId")
     return self:_request("DELETE", "v2/general/records/" .. tostring(record_id))
-  end)
-  define_method(instance, "sendRecordDraftV2", function(self, data)
+  end
+  instance.sendRecordDraftV2 = function(self, data)
     return self:_request("POST", "v2/general/record-drafts", { body = data })
-  end)
-  define_method(instance, "lookupV2", function(self, data)
+  end
+  instance.lookupV2 = function(self, data)
     return self:_request("POST", "v2/general/lookups", { body = data })
-  end)
-  define_method(instance, "lookupByValueV2", function(self, data)
+  end
+  instance.lookupByValueV2 = function(self, data)
     return self:_request("POST", "v2/general/lookups/by-value", { body = data })
-  end)
-  define_method(instance, "lookupCustomV2", function(self, data)
+  end
+  instance.lookupCustomV2 = function(self, data)
     return self:_request("POST", "v2/general/lookups/custom", { body = data })
-  end)
-  define_method(instance, "getAccountV2", function(self, query)
+  end
+  instance.getAccountV2 = function(self, query)
     return self:_request("GET", "v2/general/accounts/account", { query = query or {} })
-  end)
-  define_method(instance, "getAccountsV2", function(self, query)
+  end
+  instance.getAccountsV2 = function(self, query)
     return self:_request("GET", "v2/general/accounts", { query = query or {} })
-  end)
-  define_method(instance, "createCommunityLinkV2", function(self, data)
+  end
+  instance.createCommunityLinkV2 = function(self, data)
     return self:_request("POST", "v2/general/links", { body = data })
-  end)
-  define_method(instance, "checkCommunityLinkV2", function(self, data)
+  end
+  instance.checkCommunityLinkV2 = function(self, data)
     return self:_request("POST", "v2/general/links/check", { body = data })
-  end)
-  define_method(instance, "setAccountPermissionsV2", function(self, data)
+  end
+  instance.setAccountPermissionsV2 = function(self, data)
     return self:_request("PATCH", "v2/general/accounts/permissions", { body = data })
-  end)
-  define_method(instance, "heartbeatV2", function(self, server_id, player_count)
+  end
+  instance.heartbeatV2 = function(self, server_id, player_count)
     local resolved_server_id = self:_resolve_server_id(server_id)
     return self:_request("POST", "v2/general/servers/" .. tostring(resolved_server_id) .. "/heartbeat", {
       body = { playerCount = player_count }
     })
-  end)
-  define_method(instance, "getVersionV2", function(self)
+  end
+  instance.getVersionV2 = function(self)
     return self:_request("GET", "v2/general/version")
-  end)
-  define_method(instance, "getServersV2", function(self)
+  end
+  instance.getServersV2 = function(self)
     return self:_request("GET", "v2/general/servers")
-  end)
-  define_method(instance, "setServersV2", function(self, servers, deploy_map)
+  end
+  instance.setServersV2 = function(self, servers, deploy_map)
     return self:_request("PUT", "v2/general/servers", {
       body = {
         servers = servers,
         deployMap = deploy_map == true
       }
     })
-  end)
-  define_method(instance, "verifySecretV2", function(self, secret)
+  end
+  instance.verifySecretV2 = function(self, secret)
     return self:_request("POST", "v2/general/secrets/verify", { body = { secret = secret } })
-  end)
-  define_method(instance, "authorizeStreetSignsV2", function(self, server_id)
+  end
+  instance.authorizeStreetSignsV2 = function(self, server_id)
     local resolved_server_id = self:_resolve_server_id(server_id)
     return self:_request("POST", "v2/general/servers/" .. tostring(resolved_server_id) .. "/street-sign-auth")
-  end)
-  define_method(instance, "setPostalsV2", function(self, postals)
+  end
+  instance.setPostalsV2 = function(self, postals)
     return self:_request("PUT", "v2/general/postals", { body = { postals = postals } })
-  end)
-  define_method(instance, "sendPhotoV2", function(self, data)
+  end
+  instance.sendPhotoV2 = function(self, data)
     return self:_request("POST", "v2/general/photos", { body = data })
-  end)
-  define_method(instance, "getInfoV2", function(self)
+  end
+  instance.getInfoV2 = function(self)
     return self:_request("GET", "v2/general/info")
-  end)
+  end
 
-  define_method(instance, "getCharactersV2", function(self, query)
+  instance.getCharactersV2 = function(self, query)
     return self:_request("GET", "v2/civilian/characters", { query = query or {} })
-  end)
-  define_method(instance, "removeCharacterV2", function(self, character_id)
+  end
+  instance.removeCharacterV2 = function(self, character_id)
     self:_assert_positive_integer(character_id, "characterId")
     return self:_request("DELETE", "v2/civilian/characters/" .. tostring(character_id))
-  end)
-  define_method(instance, "setSelectedCharacterV2", function(self, data)
+  end
+  instance.setSelectedCharacterV2 = function(self, data)
     return self:_request("PUT", "v2/civilian/selected-character", { body = data })
-  end)
-  define_method(instance, "getCharacterLinksV2", function(self, query)
+  end
+  instance.getCharacterLinksV2 = function(self, query)
     return self:_request("GET", "v2/civilian/character-links", { query = query or {} })
-  end)
-  define_method(instance, "addCharacterLinkV2", function(self, sync_id, data)
+  end
+  instance.addCharacterLinkV2 = function(self, sync_id, data)
     return self:_request("PUT", "v2/civilian/character-links/" .. self:_encode_path_segment(sync_id), { body = data })
-  end)
-  define_method(instance, "removeCharacterLinkV2", function(self, sync_id, data)
+  end
+  instance.removeCharacterLinkV2 = function(self, sync_id, data)
     return self:_request("DELETE", "v2/civilian/character-links/" .. self:_encode_path_segment(sync_id), { body = data })
-  end)
+  end
 
-  define_method(instance, "getUnitsV2", function(self, query)
+  instance.getUnitsV2 = function(self, query)
     query = query or {}
     local resolved_server_id = self:_resolve_server_id(query.serverId)
     return self:_request("GET", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/units", {
@@ -362,8 +358,8 @@ local function create_client(config, adapter)
         offset = query.offset
       }
     })
-  end)
-  define_method(instance, "getCallsV2", function(self, query)
+  end
+  instance.getCallsV2 = function(self, query)
     query = query or {}
     local resolved_server_id = self:_resolve_server_id(query.serverId)
     return self:_request("GET", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/calls", {
@@ -373,29 +369,29 @@ local function create_client(config, adapter)
         type = query.type
       }
     })
-  end)
-  define_method(instance, "getCurrentCallV2", function(self, account_uuid)
+  end
+  instance.getCurrentCallV2 = function(self, account_uuid)
     return self:_request("GET", "v2/emergency/accounts/" .. self:_encode_path_segment(account_uuid) .. "/current-call")
-  end)
-  define_method(instance, "updateUnitLocationsV2", function(self, data)
+  end
+  instance.updateUnitLocationsV2 = function(self, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     return self:_request("PATCH", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/unit-locations", {
       body = { updates = data and data.updates or nil }
     })
-  end)
-  define_method(instance, "setUnitPanicV2", function(self, data)
+  end
+  instance.setUnitPanicV2 = function(self, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     return self:_request("PATCH", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/units/panic", {
       body = strip_keys(data, { "serverId" })
     })
-  end)
-  define_method(instance, "setUnitStatusV2", function(self, data)
+  end
+  instance.setUnitStatusV2 = function(self, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     return self:_request("PATCH", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/units/status", {
       body = strip_keys(data, { "serverId" })
     })
-  end)
-  define_method(instance, "kickUnitV2", function(self, data)
+  end
+  instance.kickUnitV2 = function(self, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     return self:_request("DELETE", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/units/kick", {
       body = {
@@ -403,11 +399,11 @@ local function create_client(config, adapter)
         reason = data and data.reason or nil
       }
     })
-  end)
-  define_method(instance, "getIdentifiersV2", function(self, account_uuid)
+  end
+  instance.getIdentifiersV2 = function(self, account_uuid)
     return self:_request("GET", "v2/emergency/accounts/" .. self:_encode_path_segment(account_uuid) .. "/identifiers")
-  end)
-  define_method(instance, "getAccountUnitsV2", function(self, data)
+  end
+  instance.getAccountUnitsV2 = function(self, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     return self:_request(
       "GET",
@@ -421,26 +417,26 @@ local function create_client(config, adapter)
         }
       }
     )
-  end)
-  define_method(instance, "selectIdentifierV2", function(self, account_uuid, ident_id)
+  end
+  instance.selectIdentifierV2 = function(self, account_uuid, ident_id)
     return self:_request("PUT", "v2/emergency/accounts/" .. self:_encode_path_segment(account_uuid) .. "/selected-identifier", {
       body = { identId = ident_id }
     })
-  end)
-  define_method(instance, "createIdentifierV2", function(self, account_uuid, data)
+  end
+  instance.createIdentifierV2 = function(self, account_uuid, data)
     return self:_request("POST", "v2/emergency/accounts/" .. self:_encode_path_segment(account_uuid) .. "/identifiers", { body = data })
-  end)
-  define_method(instance, "updateIdentifierV2", function(self, account_uuid, ident_id, data)
+  end
+  instance.updateIdentifierV2 = function(self, account_uuid, ident_id, data)
     self:_assert_positive_integer(ident_id, "identId")
     return self:_request("PATCH", "v2/emergency/accounts/" .. self:_encode_path_segment(account_uuid) .. "/identifiers/" .. tostring(ident_id), {
       body = data
     })
-  end)
-  define_method(instance, "deleteIdentifierV2", function(self, account_uuid, ident_id)
+  end
+  instance.deleteIdentifierV2 = function(self, account_uuid, ident_id)
     self:_assert_positive_integer(ident_id, "identId")
     return self:_request("DELETE", "v2/emergency/accounts/" .. self:_encode_path_segment(account_uuid) .. "/identifiers/" .. tostring(ident_id))
-  end)
-  define_method(instance, "addIdentifiersToGroupV2", function(self, data)
+  end
+  instance.addIdentifiersToGroupV2 = function(self, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     return self:_request(
       "PUT",
@@ -449,52 +445,52 @@ local function create_client(config, adapter)
         body = strip_keys(data, { "serverId", "groupName" })
       }
     )
-  end)
-  define_method(instance, "createEmergencyCallV2", function(self, data)
+  end
+  instance.createEmergencyCallV2 = function(self, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     return self:_request("POST", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/calls/911", {
       body = strip_keys(data, { "serverId" })
     })
-  end)
-  define_method(instance, "deleteEmergencyCallV2", function(self, call_id, server_id)
+  end
+  instance.deleteEmergencyCallV2 = function(self, call_id, server_id)
     local resolved_server_id = self:_resolve_server_id(server_id)
     self:_assert_positive_integer(call_id, "callId")
     return self:_request("DELETE", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/calls/911/" .. tostring(call_id))
-  end)
-  define_method(instance, "createDispatchCallV2", function(self, data)
+  end
+  instance.createDispatchCallV2 = function(self, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     return self:_request("POST", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/dispatch-calls", {
       body = strip_keys(data, { "serverId" })
     })
-  end)
-  define_method(instance, "updateDispatchCallV2", function(self, call_id, data)
+  end
+  instance.updateDispatchCallV2 = function(self, call_id, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     self:_assert_positive_integer(call_id, "callId")
     return self:_request("PATCH", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/dispatch-calls/" .. tostring(call_id), {
       body = strip_keys(data, { "serverId" })
     })
-  end)
-  define_method(instance, "attachUnitsToDispatchCallV2", function(self, call_id, data)
+  end
+  instance.attachUnitsToDispatchCallV2 = function(self, call_id, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     self:_assert_positive_integer(call_id, "callId")
     return self:_request("POST", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/dispatch-calls/" .. tostring(call_id) .. "/attachments", {
       body = strip_keys(data, { "serverId" })
     })
-  end)
-  define_method(instance, "detachUnitsFromDispatchCallV2", function(self, data)
+  end
+  instance.detachUnitsFromDispatchCallV2 = function(self, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     return self:_request("DELETE", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/dispatch-calls/attachments", {
       body = strip_keys(data, { "serverId" })
     })
-  end)
-  define_method(instance, "setDispatchPostalV2", function(self, call_id, postal, server_id)
+  end
+  instance.setDispatchPostalV2 = function(self, call_id, postal, server_id)
     local resolved_server_id = self:_resolve_server_id(server_id)
     self:_assert_positive_integer(call_id, "callId")
     return self:_request("PATCH", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/dispatch-calls/" .. tostring(call_id) .. "/postal", {
       body = { postal = postal }
     })
-  end)
-  define_method(instance, "setDispatchPrimaryV2", function(self, call_id, ident_id, track_primary, server_id)
+  end
+  instance.setDispatchPrimaryV2 = function(self, call_id, ident_id, track_primary, server_id)
     local resolved_server_id = self:_resolve_server_id(server_id)
     self:_assert_positive_integer(call_id, "callId")
     self:_assert_positive_integer(ident_id, "identId")
@@ -504,77 +500,77 @@ local function create_client(config, adapter)
         trackPrimary = track_primary == true
       }
     })
-  end)
-  define_method(instance, "addDispatchNoteV2", function(self, call_id, data)
+  end
+  instance.addDispatchNoteV2 = function(self, call_id, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     self:_assert_positive_integer(call_id, "callId")
     return self:_request("POST", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/dispatch-calls/" .. tostring(call_id) .. "/notes", {
       body = strip_keys(data, { "serverId" })
     })
-  end)
-  define_method(instance, "closeDispatchCallsV2", function(self, call_ids, server_id)
+  end
+  instance.closeDispatchCallsV2 = function(self, call_ids, server_id)
     local resolved_server_id = self:_resolve_server_id(server_id)
     return self:_request("POST", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/dispatch-calls/close", {
       body = { callIds = call_ids }
     })
-  end)
-  define_method(instance, "updateStreetSignsV2", function(self, data)
+  end
+  instance.updateStreetSignsV2 = function(self, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     return self:_request("PATCH", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/street-signs", {
       body = strip_keys(data, { "serverId" })
     })
-  end)
-  define_method(instance, "setStreetSignConfigV2", function(self, signs, server_id)
+  end
+  instance.setStreetSignConfigV2 = function(self, signs, server_id)
     local resolved_server_id = self:_resolve_server_id(server_id)
     return self:_request("PUT", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/street-sign-config", {
       body = { signs = signs }
     })
-  end)
-  define_method(instance, "setAvailableCalloutsV2", function(self, callouts, server_id)
+  end
+  instance.setAvailableCalloutsV2 = function(self, callouts, server_id)
     local resolved_server_id = self:_resolve_server_id(server_id)
     return self:_request("PUT", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/callouts", {
       body = { callouts = callouts }
     })
-  end)
-  define_method(instance, "getPagerConfigV2", function(self, server_id)
+  end
+  instance.getPagerConfigV2 = function(self, server_id)
     local resolved_server_id = self:_resolve_server_id(server_id)
     return self:_request("GET", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/pager-config")
-  end)
-  define_method(instance, "setPagerConfigV2", function(self, data)
+  end
+  instance.setPagerConfigV2 = function(self, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     return self:_request("PUT", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/pager-config", {
       body = strip_keys(data, { "serverId" })
     })
-  end)
-  define_method(instance, "setStationsV2", function(self, config_value, server_id)
+  end
+  instance.setStationsV2 = function(self, config_value, server_id)
     local resolved_server_id = self:_resolve_server_id(server_id)
     return self:_request("PUT", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/stations", {
       body = { config = config_value }
     })
-  end)
-  define_method(instance, "getBlipsV2", function(self, server_id)
+  end
+  instance.getBlipsV2 = function(self, server_id)
     local resolved_server_id = self:_resolve_server_id(server_id)
     return self:_request("GET", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/blips")
-  end)
-  define_method(instance, "createBlipV2", function(self, data)
+  end
+  instance.createBlipV2 = function(self, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     return self:_request("POST", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/blips", {
       body = strip_keys(data, { "serverId" })
     })
-  end)
-  define_method(instance, "updateBlipV2", function(self, blip_id, data)
+  end
+  instance.updateBlipV2 = function(self, blip_id, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     self:_assert_positive_integer(blip_id, "blipId")
     return self:_request("PATCH", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/blips/" .. tostring(blip_id), {
       body = strip_keys(data, { "serverId" })
     })
-  end)
-  define_method(instance, "deleteBlipsV2", function(self, ids, server_id)
+  end
+  instance.deleteBlipsV2 = function(self, ids, server_id)
     local resolved_server_id = self:_resolve_server_id(server_id)
     return self:_request("DELETE", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/blips", {
       body = { ids = ids }
     })
-  end)
+  end
 
   return instance
 end
