@@ -4,7 +4,16 @@
 
 ## Installation
 
-Add this resource to your server and start it before resources that consume it.
+Install the package from LuaRocks:
+
+```sh
+luarocks install sonoran.lua
+```
+
+LuaRocks package:
+[sonoran.lua on LuaRocks](https://luarocks.org/modules/sonoransoftware/sonoran.lua)
+
+If you are loading it as a FiveM resource, add this resource to your server and start it before resources that consume it.
 
 ```cfg
 ensure Sonoran.lua
