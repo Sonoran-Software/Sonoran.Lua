@@ -1,5 +1,5 @@
 {
-  "name": "SonoranRoblox",
+  "name": "sonoran-lua",
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
