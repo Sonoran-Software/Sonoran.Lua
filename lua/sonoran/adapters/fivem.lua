@@ -13,6 +13,27 @@ return function()
       return json.decode(value)
     end,
     encodeURIComponent = encode_uri_component,
+    sleep = function(delay_ms)
+      local deferred = promise.new()
+      local resolved = false
+
+      local function finish()
+        if resolved then
+          return
+        end
+
+        resolved = true
+        deferred:resolve(true)
+      end
+
+      if SetTimeout and tonumber(delay_ms) and tonumber(delay_ms) > 0 then
+        SetTimeout(tonumber(delay_ms), finish)
+      else
+        finish()
+      end
+
+      return Citizen.Await(deferred)
+    end,
     request = function(options)
       local deferred = promise.new()
       local settled = false

@@ -33,8 +33,15 @@ local fake_adapter = {
     return decoded
   end,
   encodeURIComponent = encode_uri_component,
+  sleep = function(ms)
+    fake_adapter.last_sleep_ms = ms
+  end,
   request = function(options)
     last_request = options
+    if type(next_response) == "table" and next_response[1] ~= nil then
+      return table.remove(next_response, 1)
+    end
+
     return next_response
   end
 }
@@ -54,6 +61,12 @@ end
 local function assert_nil(value, label)
   if value ~= nil then
     error(label .. " should be nil")
+  end
+end
+
+local function assert_at_least(actual, minimum, label)
+  if actual < minimum then
+    error(("%s: expected at least %s, got %s"):format(label, tostring(minimum), tostring(actual)))
   end
 end
 
@@ -609,6 +622,40 @@ client:_request("GET", "v2/test/query-arrays", {
   }
 })
 assert_truthy(last_request.url == "https://api.sonorancad.com/v2/test/query-arrays?ids=a&ids=b&status=active" or last_request.url == "https://api.sonorancad.com/v2/test/query-arrays?status=active&ids=a&ids=b", "query array serialization")
+
+fake_adapter.last_sleep_ms = nil
+next_response = {
+  {
+    ok = false,
+    status = 429,
+    headers = {
+      ["content-type"] = "application/json",
+      ["retry-after"] = "1"
+    },
+    body = "json:error"
+  },
+  {
+    ok = false,
+    status = 429,
+    headers = {
+      ["content-type"] = "application/json"
+    },
+    body = "json:error"
+  },
+  {
+    ok = true,
+    status = 200,
+    headers = {
+      ["content-type"] = "application/json"
+    },
+    body = "json:ok"
+  }
+}
+
+local rate_limited = client:getVersionV2()
+assert_response_shape(rate_limited, true, "rate limit retry success")
+assert_truthy(fake_adapter.last_sleep_ms ~= nil, "rate limit sleep recorded")
+assert_at_least(fake_adapter.last_sleep_ms, 1000, "rate limit sleep delay")
 
 next_response = {
   ok = false,

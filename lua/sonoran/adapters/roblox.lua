@@ -9,6 +9,14 @@ return function(http_service)
     encodeURIComponent = function(value)
       return http_service:UrlEncode(tostring(value))
     end,
+    sleep = function(delay_ms)
+      local normalized = tonumber(delay_ms) or 0
+      if normalized <= 0 then
+        return
+      end
+
+      task.wait(normalized / 1000)
+    end,
     request = function(options)
       local response = http_service:RequestAsync({
         Url = options.url,

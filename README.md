@@ -101,6 +101,10 @@ or:
 
 Successful JSON responses are decoded automatically. Plain-text error responses are returned as strings. `204 No Content` responses return `data = nil`.
 
+### Rate Limit Handling
+
+For CAD v2 endpoints, `Sonoran.lua` automatically retries `429 Too Many Requests` responses up to 2 times. The client honors a numeric `Retry-After` header when present and otherwise falls back to a short exponential backoff. This is intentionally limited, so callers should still avoid sending bursts to high-frequency endpoints.
+
 ## Examples
 
 General endpoint:

@@ -96,6 +96,10 @@ local function build_url(base_url, path, query, encode)
   return url .. "?" .. table.concat(parts, "&")
 end
 
+local CAD_V2_RATE_LIMIT_MAX_RETRIES = 2
+local CAD_V2_RATE_LIMIT_DEFAULT_DELAY_MS = 1000
+local CAD_V2_RATE_LIMIT_MAX_DELAY_MS = 10000
+
 local Client = {}
 Client.__index = Client
 
@@ -148,6 +152,30 @@ function Client:_parse_response(response)
   return raw_body
 end
 
+function Client:_resolve_retry_delay_ms(response, attempt)
+  local headers = normalize_headers(response and response.headers)
+  local retry_after = headers["retry-after"]
+
+  if retry_after ~= nil then
+    local retry_after_seconds = tonumber(retry_after)
+    if retry_after_seconds ~= nil and retry_after_seconds >= 0 then
+      return math.min(math.floor((retry_after_seconds * 1000) + 0.5), CAD_V2_RATE_LIMIT_MAX_DELAY_MS)
+    end
+  end
+
+  return math.min(CAD_V2_RATE_LIMIT_DEFAULT_DELAY_MS * (2 ^ attempt), CAD_V2_RATE_LIMIT_MAX_DELAY_MS)
+end
+
+function Client:_sleep_ms(delay_ms)
+  if delay_ms <= 0 then
+    return
+  end
+
+  if type(self._adapter.sleep) == "function" then
+    self._adapter.sleep(delay_ms)
+  end
+end
+
 function Client:_request(method, path, options)
   options = options or {}
 
@@ -170,31 +198,43 @@ function Client:_request(method, path, options)
     encoded_body = self._adapter.encode(body)
   end
 
-  local response = self._adapter.request({
+  local request_options = {
     method = method,
     url = build_url(self._config.apiUrl, path, options.query, self._adapter.encodeURIComponent),
     headers = headers,
     body = encoded_body,
     timeoutMs = self._config.timeoutMs
-  })
+  }
 
-  local parsed = self:_parse_response(response or {})
-  local ok = response and response.ok
-  if ok == nil then
-    local status = tonumber(response and response.status) or 0
-    ok = status >= 200 and status < 300
-  end
+  for attempt = 0, CAD_V2_RATE_LIMIT_MAX_RETRIES do
+    local response = self._adapter.request(request_options)
+    local parsed = self:_parse_response(response or {})
+    local ok = response and response.ok
+    if ok == nil then
+      local status = tonumber(response and response.status) or 0
+      ok = status >= 200 and status < 300
+    end
 
-  if ok then
-    return {
-      success = true,
-      data = parsed
-    }
+    if ok then
+      return {
+        success = true,
+        data = parsed
+      }
+    end
+
+    if tonumber(response and response.status) == 429 and attempt < CAD_V2_RATE_LIMIT_MAX_RETRIES then
+      self:_sleep_ms(self:_resolve_retry_delay_ms(response, attempt))
+    else
+      return {
+        success = false,
+        reason = parsed
+      }
+    end
   end
 
   return {
     success = false,
-    reason = parsed
+    reason = "Request was rate limited."
   }
 end
 
