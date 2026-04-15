@@ -259,6 +259,21 @@ local function create_client(config, adapter)
     }
   }, Client)
 
+  local cad_proxy = setmetatable({}, {
+    __index = function(_, key)
+      local value = instance[key]
+      if type(value) == "function" then
+        return function(_, ...)
+          return value(instance, ...)
+        end
+      end
+
+      return value
+    end
+  })
+
+  instance.cad = cad_proxy
+
   instance.getLoginPageV2 = function(self, params)
     params = params or {}
     return self:_request("GET", "v2/general/login-page", {

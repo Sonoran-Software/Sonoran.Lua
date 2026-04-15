@@ -110,7 +110,7 @@ For CAD v2 endpoints, `Sonoran.lua` automatically retries `429 Too Many Requests
 General endpoint:
 
 ```lua
-local version = sonoran:getVersionV2()
+local version = sonoran.cad:getVersionV2()
 if version.success then
   print(version.data)
 end
@@ -119,7 +119,7 @@ end
 Civilian endpoint:
 
 ```lua
-local characters = sonoran:getCharactersV2({
+local characters = sonoran.cad:getCharactersV2({
   apiId = "1234567890"
 })
 
@@ -131,7 +131,7 @@ end
 Emergency endpoint:
 
 ```lua
-local created = sonoran:createDispatchCallV2({
+local created = sonoran.cad:createDispatchCallV2({
   serverId = 1,
   origin = 1,
   status = 1,
@@ -152,6 +152,8 @@ end
 ```
 
 ## Public API
+
+All CAD v2 helpers are available under `client.cad.*`. The root-level methods are still present for backward compatibility.
 
 ### General
 
