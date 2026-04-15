@@ -247,6 +247,15 @@ local function create_client(config, adapter)
     error("Adapter is missing one or more required functions.")
   end
 
+  local product = config and config.product
+  if product == nil then
+    error("product is required when instancing.")
+  end
+
+  if product ~= 0 then
+    error("Only productEnums.CAD is currently supported in Sonoran.lua.")
+  end
+
   local instance = setmetatable({
     _adapter = adapter,
     _config = {

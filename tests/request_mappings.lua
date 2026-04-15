@@ -1,5 +1,11 @@
 local create_client = dofile("lua/sonoran/client.lua")
 
+local product_enums = {
+  CAD = 0,
+  CMS = 1,
+  RADIO = 2
+}
+
 local decode_map = {
   ["json:ok"] = { ok = true },
   ["json:error"] = { error = "bad request" }
@@ -49,6 +55,12 @@ local fake_adapter = {
 local function assert_equal(actual, expected, label)
   if actual ~= expected then
     error(("%s: expected %s, got %s"):format(label, tostring(expected), tostring(actual)))
+  end
+end
+
+local function assert_contains(actual, expected, label)
+  if type(actual) ~= "string" or not string.find(actual, expected, 1, true) then
+    error(("%s: expected %s to contain %s"):format(label, tostring(actual), tostring(expected)))
   end
 end
 
@@ -114,6 +126,7 @@ local function assert_response_shape(response, expect_success, label)
 end
 
 local client = create_client({
+  product = product_enums.CAD,
   apiKey = "test-key",
   communityId = "community-123",
   apiUrl = "https://api.sonorancad.com/",
@@ -123,6 +136,21 @@ local client = create_client({
   },
   timeoutMs = 12345
 }, fake_adapter)
+
+local missing_product_ok, missing_product_error = pcall(create_client, {
+  apiKey = "test-key",
+  communityId = "community-123"
+}, fake_adapter)
+assert_equal(missing_product_ok, false, "missing product should fail")
+assert_contains(missing_product_error, "product is required when instancing.", "missing product error")
+
+local unsupported_product_ok, unsupported_product_error = pcall(create_client, {
+  product = product_enums.CMS,
+  apiKey = "test-key",
+  communityId = "community-123"
+}, fake_adapter)
+assert_equal(unsupported_product_ok, false, "unsupported product should fail")
+assert_contains(unsupported_product_error, "Only productEnums.CAD is currently supported in Sonoran.lua.", "unsupported product error")
 
 assert_truthy(type(client.cad) == "table", "cad namespace exists")
 assert_truthy(client.cad ~= client, "cad namespace is distinct from root client")

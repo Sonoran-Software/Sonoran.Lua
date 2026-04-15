@@ -55,7 +55,10 @@ local Sonoran = require(ReplicatedStorage.Packages.Sonoran)
 FiveM resource usage:
 
 ```lua
+local Sonoran = require("sonoran")
+
 local sonoran = exports["Sonoran.lua"]:createClient({
+  product = Sonoran.productEnums.CAD,
   apiKey = "your-cad-api-key",
   communityId = "your-community-id",
   apiUrl = "https://api.sonorancad.com",
@@ -68,6 +71,7 @@ Roblox usage:
 
 ```lua
 local sonoran = Sonoran.createClient({
+  product = Sonoran.productEnums.CAD,
   apiKey = "your-cad-api-key",
   communityId = "your-community-id",
   apiUrl = "https://api.sonorancad.com",
@@ -79,6 +83,7 @@ local sonoran = Sonoran.createClient({
 ### Config
 
 - `apiKey`: required for authenticated endpoints.
+- `product`: required; currently must be `Sonoran.productEnums.CAD`.
 - `communityId`: optional; used by `getLoginPageV2()` when no explicit `communityId` is supplied.
 - `apiUrl`: optional; defaults to `https://api.sonorancad.com`.
 - `defaultServerId`: optional; defaults to `1`.
