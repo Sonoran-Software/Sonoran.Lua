@@ -252,8 +252,8 @@ local function create_client(config, adapter)
     error("product is required when instancing.")
   end
 
-  if product ~= 0 then
-    error("Only productEnums.CAD is currently supported in Sonoran.lua.")
+  if product ~= 0 and product ~= 2 then
+    error("Only productEnums.CAD and productEnums.RADIO are currently supported in Sonoran.lua.")
   end
 
   local instance = setmetatable({
@@ -261,7 +261,7 @@ local function create_client(config, adapter)
     _config = {
       apiKey = config and config.apiKey or nil,
       communityId = config and config.communityId or nil,
-      apiUrl = trim_trailing_slashes(config and config.apiUrl or "https://api.sonorancad.com"),
+      apiUrl = trim_trailing_slashes(config and config.apiUrl or (product == 2 and "https://api.sonoranradio.com" or "https://api.sonorancad.com")),
       defaultServerId = config and config.defaultServerId or 1,
       headers = shallow_copy(config and config.headers or {}),
       timeoutMs = config and config.timeoutMs or 30000
@@ -282,6 +282,7 @@ local function create_client(config, adapter)
   })
 
   instance.cad = cad_proxy
+  instance.radio = cad_proxy
 
   instance.getLoginPageV2 = function(self, params)
     params = params or {}
@@ -633,6 +634,91 @@ local function create_client(config, adapter)
     local resolved_server_id = self:_resolve_server_id(server_id)
     return self:_request("DELETE", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/blips", {
       body = { ids = ids }
+    })
+  end
+
+  instance.getCommunityChannelsV2 = function(self, server_id)
+    local resolved_server_id = self:_resolve_server_id(server_id)
+    return self:_request("GET", "v2/servers/" .. tostring(resolved_server_id) .. "/channels")
+  end
+  instance.getConnectedUsersV2 = function(self, server_id)
+    local resolved_server_id = self:_resolve_server_id(server_id)
+    return self:_request("GET", "v2/servers/" .. tostring(resolved_server_id) .. "/connected-users")
+  end
+  instance.getConnectedUserV2 = function(self, room_id, identity, server_id)
+    local resolved_server_id = self:_resolve_server_id(server_id)
+    self:_assert_positive_integer(room_id, "roomId")
+    return self:_request("GET", "v2/servers/" .. tostring(resolved_server_id) .. "/rooms/" .. tostring(room_id) .. "/users/" .. self:_encode_path_segment(identity))
+  end
+  instance.setUserChannelsV2 = function(self, room_id, identity, options, server_id)
+    local resolved_server_id = self:_resolve_server_id(server_id)
+    self:_assert_positive_integer(room_id, "roomId")
+    return self:_request("PATCH", "v2/servers/" .. tostring(resolved_server_id) .. "/rooms/" .. tostring(room_id) .. "/users/" .. self:_encode_path_segment(identity) .. "/channels", {
+      body = shallow_copy(options or {})
+    })
+  end
+  instance.setUserDisplayNameV2 = function(self, data)
+    local resolved_server_id = self:_resolve_server_id(data and data.serverId)
+    return self:_request("PATCH", "v2/servers/" .. tostring(resolved_server_id) .. "/users/display-name", {
+      body = strip_keys(data, { "serverId" })
+    })
+  end
+  instance.approveMembersV2 = function(self, acc_ids, server_id)
+    local resolved_server_id = self:_resolve_server_id(server_id)
+    return self:_request("POST", "v2/servers/" .. tostring(resolved_server_id) .. "/members/approve", {
+      body = { accIds = acc_ids }
+    })
+  end
+  instance.kickMembersV2 = function(self, acc_ids, server_id)
+    local resolved_server_id = self:_resolve_server_id(server_id)
+    return self:_request("POST", "v2/servers/" .. tostring(resolved_server_id) .. "/members/kick", {
+      body = { accIds = acc_ids }
+    })
+  end
+  instance.banMembersV2 = function(self, acc_ids, server_id)
+    local resolved_server_id = self:_resolve_server_id(server_id)
+    return self:_request("POST", "v2/servers/" .. tostring(resolved_server_id) .. "/members/ban", {
+      body = { accIds = acc_ids }
+    })
+  end
+  instance.setMemberDisplayNamesV2 = function(self, acc_nicknames, server_id)
+    local resolved_server_id = self:_resolve_server_id(server_id)
+    return self:_request("PATCH", "v2/servers/" .. tostring(resolved_server_id) .. "/members/display-names", {
+      body = { accNicknames = acc_nicknames }
+    })
+  end
+  instance.setMemberPermissionsV2 = function(self, user_perms, server_id)
+    local resolved_server_id = self:_resolve_server_id(server_id)
+    return self:_request("PATCH", "v2/servers/" .. tostring(resolved_server_id) .. "/members/permissions", {
+      body = { userPerms = user_perms }
+    })
+  end
+  instance.getServerSubscriptionFromIpV2 = function(self)
+    return self:_request("GET", "v2/server-subscriptions/by-ip", {
+      authenticated = false
+    })
+  end
+  instance.setServerIpV2 = function(self, data)
+    local resolved_server_id = self:_resolve_server_id(data and data.serverId)
+    return self:_request("POST", "v2/servers/" .. tostring(resolved_server_id) .. "/server-ip", {
+      body = strip_keys(data, { "serverId" })
+    })
+  end
+  instance.setInGameSpeakerLocationsV2 = function(self, locations, server_id)
+    local resolved_server_id = self:_resolve_server_id(server_id)
+    return self:_request("PUT", "v2/servers/" .. tostring(resolved_server_id) .. "/speakers", {
+      body = { locations = locations }
+    })
+  end
+  instance.playToneV2 = function(self, room_id, tones, play_to, server_id)
+    local resolved_server_id = self:_resolve_server_id(server_id)
+    self:_assert_positive_integer(room_id, "roomId")
+    return self:_request("POST", "v2/servers/" .. tostring(resolved_server_id) .. "/tones/play", {
+      body = {
+        roomId = room_id,
+        tones = tones,
+        playTo = play_to
+      }
     })
   end
 

@@ -150,7 +150,7 @@ local unsupported_product_ok, unsupported_product_error = pcall(create_client, {
   communityId = "community-123"
 }, fake_adapter)
 assert_equal(unsupported_product_ok, false, "unsupported product should fail")
-assert_contains(unsupported_product_error, "Only productEnums.CAD is currently supported in Sonoran.lua.", "unsupported product error")
+assert_contains(unsupported_product_error, "Only productEnums.CAD and productEnums.RADIO are currently supported in Sonoran.lua.", "unsupported product error")
 
 assert_truthy(type(client.cad) == "table", "cad namespace exists")
 assert_truthy(client.cad ~= client, "cad namespace is distinct from root client")
