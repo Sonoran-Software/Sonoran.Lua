@@ -205,10 +205,7 @@ All CAD v2 helpers are available under `client.cad.*`. The root-level methods ar
 - `getUnitsV2(query?)`
 - `getCallsV2(query?)`
 - `getCurrentCallV2(accountUuid)`
-- `authenticateWsV2(connection, options?)`
-- `updateUnitLocationsApiV2(data)`
 - `updateUnitLocationsV2(data)`
-- `updateUnitLocationsWsV2(connection, updates)`
 - `setUnitPanicV2(data)`
 - `setUnitStatusV2(data)`
 - `kickUnitV2(data)`
@@ -242,11 +239,8 @@ All CAD v2 helpers are available under `client.cad.*`. The root-level methods ar
 
 ## Notes
 
-- `authenticateWsV2(connection, options?)` invokes the SignalR hub `authenticatev2` method using the client's configured `communityId` and `apiKey` by default.
-- `updateUnitLocationsV2(data)` remains as a backwards-compatible alias of `updateUnitLocationsApiV2(data)`.
-- `updateUnitLocationsWsV2(connection, updates)` invokes the websocket `unitLocation` method and accepts either an invoker function or a connection object with `:invoke(method, payload)`.
-- Sonoran.lua does not create or negotiate the SignalR websocket connection for you. Your environment still needs a compatible SignalR client connection before using the websocket helpers.
-- Unit location updates can now target `communityUserId` for both the v2 HTTP endpoint and the websocket flow.
+- `updateUnitLocationsV2(data)` uses the HTTP v2 endpoint for slower unit location updates.
+- Unit location updates can target `communityUserId` through the v2 HTTP endpoint.
 - FiveM uses `PerformHttpRequest`, `promise.new()`, and `Citizen.Await`.
 - Roblox uses `HttpService:RequestAsync()`.
 - Radio, CMS, and legacy CAD endpoints are intentionally out of scope for this initial port.

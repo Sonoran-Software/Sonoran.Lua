@@ -408,13 +408,6 @@ local cases = {
     body = { updates = { { communityUserId = "player-1", location = "Main" } } }
   },
   {
-    name = "updateUnitLocationsApiV2",
-    invoke = function() return client.cad:updateUnitLocationsApiV2({ serverId = 5, updates = { { communityUserId = "player-1", location = "Main" } } }) end,
-    method = "PATCH",
-    url = "https://api.sonorancad.com/v2/emergency/servers/5/unit-locations",
-    body = { updates = { { communityUserId = "player-1", location = "Main" } } }
-  },
-  {
     name = "setUnitPanicV2",
     invoke = function() return client.cad:setUnitPanicV2({ serverId = 5, apiIds = { "1" }, isPanic = true }) end,
     method = "PATCH",
@@ -727,38 +720,5 @@ next_response = {
 local text_failure = client.cad:getInfoV2()
 assert_equal(text_failure.success, false, "plain text failure success")
 assert_equal(text_failure.reason, "plain error", "plain text failure reason")
-
-local ws_calls = {}
-local ws_connection = {
-  invoke = function(self, method, payload)
-    ws_calls[#ws_calls + 1] = { method = method, payload = payload }
-    return { success = true, count = #payload }
-  end
-}
-
-local ws_auth_response = client.cad:authenticateWsV2(ws_connection, { serverId = 5 })
-assert_equal(ws_calls[1].method, "authenticatev2", "authenticateWsV2 method")
-assert_deep_equal(ws_calls[1].payload, {
-  communityId = "community-123",
-  apiKey = "test-key",
-  serverId = 5
-}, "authenticateWsV2 payload")
-assert_equal(ws_auth_response.success, true, "authenticateWsV2 response")
-
-local ws_response = client.cad:updateUnitLocationsWsV2(ws_connection, {
-  {
-    communityUserId = "player-1",
-    location = "Main"
-  }
-})
-assert_equal(ws_calls[2].method, "unitLocation", "updateUnitLocationsWsV2 method")
-assert_deep_equal(ws_calls[2].payload, {
-  {
-    communityUserId = "player-1",
-    location = "Main"
-  }
-}, "updateUnitLocationsWsV2 payload")
-assert_equal(ws_response.success, true, "updateUnitLocationsWsV2 response")
-assert_equal(ws_response.count, 1, "updateUnitLocationsWsV2 count")
 
 print("All Sonoran.lua request mapping tests passed.")

@@ -176,18 +176,6 @@ function Client:_sleep_ms(delay_ms)
   end
 end
 
-function Client:_invoke_ws(connection, method, payload)
-  if type(connection) == "function" then
-    return connection(method, payload)
-  end
-
-  if type(connection) ~= "table" or type(connection.invoke) ~= "function" then
-    error("connection must be a websocket invoker function or table with an invoke method.")
-  end
-
-  return connection:invoke(method, payload)
-end
-
 function Client:_request(method, path, options)
   options = options or {}
 
@@ -464,30 +452,11 @@ local function create_client(config, adapter)
   instance.getCurrentCallV2 = function(self, account_uuid)
     return self:_request("GET", "v2/emergency/accounts/" .. self:_encode_path_segment(account_uuid) .. "/current-call")
   end
-  instance.authenticateWsV2 = function(self, connection, options)
-    options = options or {}
-    return self:_invoke_ws(connection, "authenticatev2", {
-      communityId = options.communityId or self._config.communityId,
-      apiKey = options.apiKey or self._config.apiKey,
-      serverId = options.serverId
-    })
-  end
-  instance.updateUnitLocationsApiV2 = function(self, data)
+  instance.updateUnitLocationsV2 = function(self, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     return self:_request("PATCH", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/unit-locations", {
       body = { updates = data and data.updates or nil }
     })
-  end
-  instance.updateUnitLocationsV2 = function(self, data)
-    return self:updateUnitLocationsApiV2(data)
-  end
-  instance.updateUnitLocationsWsV2 = function(self, connection, updates)
-    local payload = updates
-    if type(payload) == "table" and payload.updates ~= nil then
-      payload = payload.updates
-    end
-
-    return self:_invoke_ws(connection, "unitLocation", payload)
   end
   instance.setUnitPanicV2 = function(self, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
