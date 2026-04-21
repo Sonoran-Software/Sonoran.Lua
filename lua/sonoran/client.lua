@@ -464,6 +464,14 @@ local function create_client(config, adapter)
   instance.getCurrentCallV2 = function(self, account_uuid)
     return self:_request("GET", "v2/emergency/accounts/" .. self:_encode_path_segment(account_uuid) .. "/current-call")
   end
+  instance.authenticateWsV2 = function(self, connection, options)
+    options = options or {}
+    return self:_invoke_ws(connection, "authenticatev2", {
+      communityId = options.communityId or self._config.communityId,
+      apiKey = options.apiKey or self._config.apiKey,
+      serverId = options.serverId
+    })
+  end
   instance.updateUnitLocationsApiV2 = function(self, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     return self:_request("PATCH", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/unit-locations", {

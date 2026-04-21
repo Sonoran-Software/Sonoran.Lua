@@ -736,14 +736,23 @@ local ws_connection = {
   end
 }
 
+local ws_auth_response = client.cad:authenticateWsV2(ws_connection, { serverId = 5 })
+assert_equal(ws_calls[1].method, "authenticatev2", "authenticateWsV2 method")
+assert_deep_equal(ws_calls[1].payload, {
+  communityId = "community-123",
+  apiKey = "test-key",
+  serverId = 5
+}, "authenticateWsV2 payload")
+assert_equal(ws_auth_response.success, true, "authenticateWsV2 response")
+
 local ws_response = client.cad:updateUnitLocationsWsV2(ws_connection, {
   {
     communityUserId = "player-1",
     location = "Main"
   }
 })
-assert_equal(ws_calls[1].method, "unitLocation", "updateUnitLocationsWsV2 method")
-assert_deep_equal(ws_calls[1].payload, {
+assert_equal(ws_calls[2].method, "unitLocation", "updateUnitLocationsWsV2 method")
+assert_deep_equal(ws_calls[2].payload, {
   {
     communityUserId = "player-1",
     location = "Main"
