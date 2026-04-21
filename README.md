@@ -205,7 +205,9 @@ All CAD v2 helpers are available under `client.cad.*`. The root-level methods ar
 - `getUnitsV2(query?)`
 - `getCallsV2(query?)`
 - `getCurrentCallV2(accountUuid)`
+- `updateUnitLocationsApiV2(data)`
 - `updateUnitLocationsV2(data)`
+- `updateUnitLocationsWsV2(connection, updates)`
 - `setUnitPanicV2(data)`
 - `setUnitStatusV2(data)`
 - `kickUnitV2(data)`
@@ -239,6 +241,9 @@ All CAD v2 helpers are available under `client.cad.*`. The root-level methods ar
 
 ## Notes
 
+- `updateUnitLocationsV2(data)` remains as a backwards-compatible alias of `updateUnitLocationsApiV2(data)`.
+- `updateUnitLocationsWsV2(connection, updates)` invokes the websocket `unitLocation` method and accepts either an invoker function or a connection object with `:invoke(method, payload)`.
+- Unit location updates can now target `communityUserId` for both the v2 HTTP endpoint and the websocket flow.
 - FiveM uses `PerformHttpRequest`, `promise.new()`, and `Citizen.Await`.
 - Roblox uses `HttpService:RequestAsync()`.
 - Radio, CMS, and legacy CAD endpoints are intentionally out of scope for this initial port.
