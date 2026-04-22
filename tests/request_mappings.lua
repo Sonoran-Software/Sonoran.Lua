@@ -476,10 +476,33 @@ local cases = {
   },
   {
     name = "createEmergencyCallV2",
-    invoke = function() return client.cad:createEmergencyCallV2({ serverId = 4, isEmergency = true, caller = "caller", location = "loc", description = "desc" }) end,
+    invoke = function()
+      return client.cad:createEmergencyCallV2({
+        serverId = 4,
+        isEmergency = true,
+        caller = "caller",
+        location = "loc",
+        description = "desc",
+        metaData = {
+          x = 123.45,
+          silentAlert = false,
+          postal = "9001"
+        }
+      })
+    end,
     method = "POST",
     url = "https://api.sonorancad.com/v2/emergency/servers/4/calls/911",
-    body = { isEmergency = true, caller = "caller", location = "loc", description = "desc" }
+    body = {
+      isEmergency = true,
+      caller = "caller",
+      location = "loc",
+      description = "desc",
+      metaData = {
+        x = "123.45",
+        silentAlert = "false",
+        postal = "9001"
+      }
+    }
   },
   {
     name = "deleteEmergencyCallV2",

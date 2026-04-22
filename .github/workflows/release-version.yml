@@ -104,3 +104,20 @@ jobs:
         with:
           tag_name: v${{ steps.version.outputs.version }}
           files: ${{ steps.fivem.outputs.archive }}
+
+      - name: Dispatch SonoranCADFiveM sync
+        if: success()
+        env:
+          DISPATCH_TOKEN: ${{ secrets.SONORAN_REPO_DISPATCH_TOKEN }}
+        run: |
+          if [ -z "$DISPATCH_TOKEN" ]; then
+            echo "SONORAN_REPO_DISPATCH_TOKEN is not configured; skipping SonoranCADFiveM sync dispatch."
+            exit 0
+          fi
+
+          curl --fail --silent --show-error \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $DISPATCH_TOKEN" \
+            https://api.github.com/repos/Sonoran-Software/SonoranCADFiveM/dispatches \
+            -d '{"event_type":"sonoran-lua-updated","client_payload":{"source_repository":"Sonoran-Software/Sonoran.Lua","source_ref":"master","source_version":"v${{ steps.version.outputs.version }}"}}'
