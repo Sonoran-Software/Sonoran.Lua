@@ -63,8 +63,11 @@ local sonoran = exports["Sonoran.lua"]:createClient({
   communityId = "your-community-id",
   apiUrl = "https://api.sonorancad.com",
   defaultServerId = 1,
-  timeoutMs = 30000
+  timeoutMs = 30000,
+  logLevel = Sonoran.logLevels.OFF
 })
+
+sonoran:setLogLevel(Sonoran.logLevels.DEBUG)
 ```
 
 Roblox usage:
@@ -76,8 +79,11 @@ local sonoran = Sonoran.createClient({
   communityId = "your-community-id",
   apiUrl = "https://api.sonorancad.com",
   defaultServerId = 1,
-  timeoutMs = 30000
+  timeoutMs = 30000,
+  logLevel = Sonoran.logLevels.OFF
 })
+
+sonoran:setLogLevel(Sonoran.logLevels.DEBUG)
 ```
 
 ### Config
@@ -89,6 +95,17 @@ local sonoran = Sonoran.createClient({
 - `defaultServerId`: optional; defaults to `1`.
 - `headers`: optional extra headers merged into every request.
 - `timeoutMs`: optional timeout for the FiveM adapter; defaults to `30000`.
+- `logLevel`: optional; `Sonoran.logLevels.OFF` by default. The only supported values are `OFF` and `DEBUG`.
+
+### Debug Logging
+
+Use `setLogLevel()` to toggle HTTP debug output at runtime:
+
+```lua
+sonoran:setLogLevel(Sonoran.logLevels.DEBUG)
+```
+
+When `DEBUG` is enabled, `Sonoran.lua` prints every HTTP request and response to the console, including the method, URL, headers, body, response status, and response headers. This includes the `Authorization` header when present, so only enable it in environments where that output is acceptable.
 
 ### Response Shape
 

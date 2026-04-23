@@ -82,6 +82,28 @@ local function assert_at_least(actual, minimum, label)
   end
 end
 
+local function capture_prints(callback)
+  local original_print = print
+  local logs = {}
+
+  print = function(...)
+    local parts = {}
+    for index = 1, select("#", ...) do
+      parts[#parts + 1] = tostring(select(index, ...))
+    end
+    logs[#logs + 1] = table.concat(parts, "\t")
+  end
+
+  local ok, result = pcall(callback)
+  print = original_print
+
+  if not ok then
+    error(result)
+  end
+
+  return logs, result
+end
+
 local function assert_deep_equal(actual, expected, label)
   if type(expected) ~= "table" then
     assert_equal(actual, expected, label)
@@ -154,6 +176,12 @@ assert_contains(unsupported_product_error, "Only productEnums.CAD and productEnu
 
 assert_truthy(type(client.cad) == "table", "cad namespace exists")
 assert_truthy(client.cad ~= client, "cad namespace is distinct from root client")
+
+local invalid_log_level_ok, invalid_log_level_error = pcall(function()
+  client:setLogLevel("TRACE")
+end)
+assert_equal(invalid_log_level_ok, false, "invalid log level should fail")
+assert_contains(invalid_log_level_error, "logLevel must be OFF or DEBUG.", "invalid log level error")
 
 local cases = {
   {
@@ -731,6 +759,40 @@ next_response = {
 local empty = client.cad:getVersionV2()
 assert_equal(empty.success, true, "204 success")
 assert_nil(empty.data, "204 data")
+
+client:setLogLevel("DEBUG")
+local debug_logs, debug_response = capture_prints(function()
+  next_response = {
+    ok = true,
+    status = 200,
+    headers = {
+      ["content-type"] = "application/json"
+    },
+    body = "json:ok"
+  }
+  return client.cad:getVersionV2()
+end)
+assert_response_shape(debug_response, true, "debug logging response")
+assert_at_least(#debug_logs, 10, "debug logging lines")
+assert_contains(table.concat(debug_logs, "\n"), "HTTP request", "debug logging request marker")
+assert_contains(table.concat(debug_logs, "\n"), "HTTP response", "debug logging response marker")
+assert_contains(table.concat(debug_logs, "\n"), "https://api.sonorancad.com/v2/general/version", "debug logging url")
+assert_contains(table.concat(debug_logs, "\n"), "Authorization", "debug logging auth header")
+
+client:setLogLevel("OFF")
+local off_logs, off_response = capture_prints(function()
+  next_response = {
+    ok = true,
+    status = 200,
+    headers = {
+      ["content-type"] = "application/json"
+    },
+    body = "json:ok"
+  }
+  return client.cad:getVersionV2()
+end)
+assert_response_shape(off_response, true, "off logging response")
+assert_equal(#off_logs, 0, "off logging lines")
 
 next_response = {
   ok = false,
