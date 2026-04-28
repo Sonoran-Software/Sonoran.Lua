@@ -118,10 +118,10 @@ All public methods return:
 or:
 
 ```lua
-{ success = false, reason = ... }
+{ success = false, reason = ..., message = ... }
 ```
 
-Successful JSON responses are decoded automatically. Plain-text error responses are returned as strings. `204 No Content` responses return `data = nil`.
+Successful JSON responses are decoded automatically. When a failed JSON response includes a `message` field, it is also exposed as `response.message`. Plain-text error responses are returned as strings. `204 No Content` responses return `data = nil`.
 
 ### Rate Limit Handling
 

@@ -217,6 +217,16 @@ function Client:_parse_response(response)
     end
   end
 
+  if type(raw_body) == "string" then
+    local trimmed = raw_body:match("^%s*(.-)%s*$")
+    if trimmed ~= "" and (starts_with(trimmed, "{") or starts_with(trimmed, "[")) then
+      local ok, parsed = pcall(self._adapter.decode, raw_body)
+      if ok then
+        return parsed
+      end
+    end
+  end
+
   return raw_body
 end
 
@@ -322,9 +332,9 @@ function Client:_request(method, path, options)
     local response = self._adapter.request(request_options)
     self:_debug_log_http_response(response, attempt)
     local parsed = self:_parse_response(response or {})
+    local status = tonumber(response and response.status) or 0
     local ok = response and response.ok
     if ok == nil then
-      local status = tonumber(response and response.status) or 0
       ok = status >= 200 and status < 300
     end
 
@@ -335,19 +345,25 @@ function Client:_request(method, path, options)
       }
     end
 
-    if tonumber(response and response.status) == 429 and attempt < CAD_V2_RATE_LIMIT_MAX_RETRIES then
+    if status == 429 and attempt < CAD_V2_RATE_LIMIT_MAX_RETRIES then
       self:_sleep_ms(self:_resolve_retry_delay_ms(response, attempt))
     else
+      local message = type(parsed) == "table" and parsed.message or nil
+      if message == nil and status == 429 then
+        message = "API rate limit exceeded"
+      end
       return {
         success = false,
-        reason = parsed
+        reason = parsed,
+        message = message
       }
     end
   end
 
   return {
     success = false,
-    reason = "Request was rate limited."
+    reason = "Request was rate limited.",
+    message = "Request was rate limited."
   }
 end
 

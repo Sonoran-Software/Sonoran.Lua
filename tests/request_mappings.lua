@@ -8,7 +8,10 @@ local product_enums = {
 
 local decode_map = {
   ["json:ok"] = { ok = true },
-  ["json:error"] = { error = "bad request" }
+  ["json:error"] = { error = "bad request" },
+  ["json:message"] = {
+    message = "API rate limit exceeded"
+  }
 }
 
 local last_request
@@ -751,6 +754,19 @@ local failure = client.cad:verifySecretV2("bad")
 assert_response_shape(failure, false, "error normalization")
 
 next_response = {
+  ok = false,
+  status = 429,
+  headers = {
+    ["content-type"] = "application/json"
+  },
+  body = "json:message"
+}
+local message_failure = client.cad:getVersionV2()
+assert_equal(message_failure.success, false, "message failure success")
+assert_equal(message_failure.message, "API rate limit exceeded", "message failure message")
+assert_equal(message_failure.reason.message, "API rate limit exceeded", "message failure reason.message")
+
+next_response = {
   ok = true,
   status = 204,
   headers = {},
@@ -805,5 +821,6 @@ next_response = {
 local text_failure = client.cad:getInfoV2()
 assert_equal(text_failure.success, false, "plain text failure success")
 assert_equal(text_failure.reason, "plain error", "plain text failure reason")
+assert_equal(text_failure.message, nil, "plain text failure message")
 
 print("All Sonoran.lua request mapping tests passed.")
