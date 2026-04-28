@@ -400,6 +400,8 @@ local function create_client(config, adapter)
 
   if config and config.logLevel ~= nil then
     instance:setLogLevel(config.logLevel)
+  elseif config and config.setLogLevel ~= nil then
+    instance:setLogLevel(config.setLogLevel)
   end
 
   local cad_proxy = setmetatable({}, {
