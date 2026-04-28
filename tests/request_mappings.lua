@@ -181,7 +181,7 @@ local invalid_log_level_ok, invalid_log_level_error = pcall(function()
   client:setLogLevel("TRACE")
 end)
 assert_equal(invalid_log_level_ok, false, "invalid log level should fail")
-assert_contains(invalid_log_level_error, "logLevel must be OFF or DEBUG.", "invalid log level error")
+assert_contains(invalid_log_level_error, "logLevel must be OFF, ERROR, or DEBUG.", "invalid log level error")
 
 local cases = {
   {
@@ -740,6 +740,33 @@ assert_truthy(fake_adapter.last_sleep_ms ~= nil, "rate limit sleep recorded")
 assert_at_least(fake_adapter.last_sleep_ms, 1000, "rate limit sleep delay")
 
 next_response = {
+  {
+    ok = false,
+    status = 429,
+    headers = {
+      ["content-type"] = "application/json",
+      ["retry-after"] = "Wed, 21 Oct 2015 07:28:00 GMT"
+    },
+    body = "json:error"
+  }
+}
+local original_time = os.time
+os.time = function(value)
+  if value == nil then
+    return 1445412420
+  end
+
+  return original_time(value)
+end
+local http_date_logs, http_date_failure = capture_prints(function()
+  client:setLogLevel("ERROR")
+  return client.cad:getVersionV2()
+end)
+os.time = original_time
+assert_response_shape(http_date_failure, false, "http date rate limit failure")
+assert_contains(table.concat(http_date_logs, "\n"), "exceeds the automatic retry limit", "http date rate limit log")
+
+next_response = {
   ok = false,
   status = 400,
   headers = {
@@ -778,6 +805,24 @@ assert_contains(table.concat(debug_logs, "\n"), "HTTP request", "debug logging r
 assert_contains(table.concat(debug_logs, "\n"), "HTTP response", "debug logging response marker")
 assert_contains(table.concat(debug_logs, "\n"), "https://api.sonorancad.com/v2/general/version", "debug logging url")
 assert_contains(table.concat(debug_logs, "\n"), "Authorization", "debug logging auth header")
+assert_contains(table.concat(debug_logs, "\n"), "<redacted>", "debug logging redacted auth header")
+
+client:setLogLevel("ERROR")
+local error_logs, error_response = capture_prints(function()
+  next_response = {
+    ok = false,
+    status = 429,
+    headers = {
+      ["content-type"] = "application/json",
+      ["retry-after"] = "11"
+    },
+    body = "json:error"
+  }
+  return client.cad:getVersionV2()
+end)
+assert_response_shape(error_response, false, "error logging response")
+assert_contains(table.concat(error_logs, "\n"), "[Sonoran.lua][ERROR] HTTP 429 rate limit received.", "error logging marker")
+assert_contains(table.concat(error_logs, "\n"), "<redacted>", "error logging redacted auth header")
 
 client:setLogLevel("OFF")
 local off_logs, off_response = capture_prints(function()

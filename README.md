@@ -95,7 +95,7 @@ sonoran:setLogLevel(Sonoran.logLevels.DEBUG)
 - `defaultServerId`: optional; defaults to `1`.
 - `headers`: optional extra headers merged into every request.
 - `timeoutMs`: optional timeout for the FiveM adapter; defaults to `30000`.
-- `logLevel`: optional; `Sonoran.logLevels.OFF` by default. The only supported values are `OFF` and `DEBUG`.
+- `logLevel`: optional; `Sonoran.logLevels.OFF` by default. Supported values are `OFF`, `ERROR`, and `DEBUG`.
 
 ### Debug Logging
 
@@ -105,7 +105,13 @@ Use `setLogLevel()` to toggle HTTP debug output at runtime:
 sonoran:setLogLevel(Sonoran.logLevels.DEBUG)
 ```
 
-When `DEBUG` is enabled, `Sonoran.lua` prints every HTTP request and response to the console, including the method, URL, headers, body, response status, and response headers. This includes the `Authorization` header when present, so only enable it in environments where that output is acceptable.
+Use `ERROR` to only print failed requests and rate-limit events:
+
+```lua
+sonoran:setLogLevel(Sonoran.logLevels.ERROR)
+```
+
+When `DEBUG` is enabled, `Sonoran.lua` prints every HTTP request and response to the console, including the method, URL, headers, body, response status, and response headers. Sensitive request values such as `Authorization` and API-key style fields are redacted in both `DEBUG` and `ERROR` logs.
 
 ### Response Shape
 
@@ -125,7 +131,7 @@ Successful JSON responses are decoded automatically. Plain-text error responses 
 
 ### Rate Limit Handling
 
-For CAD v2 endpoints, `Sonoran.lua` automatically retries `429 Too Many Requests` responses up to 2 times. The client honors a numeric `Retry-After` header when present and otherwise falls back to a short exponential backoff. This is intentionally limited, so callers should still avoid sending bursts to high-frequency endpoints.
+For CAD v2 endpoints, `Sonoran.lua` automatically retries `429 Too Many Requests` responses up to 2 times when it can safely honor the server's wait window. The client checks `Retry-After` first, including both delta-seconds and HTTP-date formats, then falls back to `RateLimit-Reset`, `X-RateLimit-Reset`, and finally a short exponential backoff. If the server asks for a longer wait than the client's automatic retry limit, or the active adapter cannot sleep, the request fails instead of retrying too early.
 
 ## Examples
 
