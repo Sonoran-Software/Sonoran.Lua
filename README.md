@@ -64,7 +64,7 @@ local sonoran = exports["Sonoran.lua"]:createClient({
   apiUrl = "https://api.sonorancad.com",
   defaultServerId = 1,
   timeoutMs = 30000,
-  logLevel = Sonoran.logLevels.OFF
+  logLevel = Sonoran.logLevels.ERROR
 })
 
 sonoran:setLogLevel(Sonoran.logLevels.DEBUG)
@@ -80,7 +80,7 @@ local sonoran = Sonoran.createClient({
   apiUrl = "https://api.sonorancad.com",
   defaultServerId = 1,
   timeoutMs = 30000,
-  logLevel = Sonoran.logLevels.OFF
+  logLevel = Sonoran.logLevels.ERROR
 })
 
 sonoran:setLogLevel(Sonoran.logLevels.DEBUG)
@@ -95,7 +95,7 @@ sonoran:setLogLevel(Sonoran.logLevels.DEBUG)
 - `defaultServerId`: optional; defaults to `1`.
 - `headers`: optional extra headers merged into every request.
 - `timeoutMs`: optional timeout for the FiveM adapter; defaults to `30000`.
-- `logLevel`: optional; `Sonoran.logLevels.OFF` by default. Supported values are `OFF`, `ERROR`, and `DEBUG`.
+- `logLevel`: optional; `Sonoran.logLevels.ERROR` by default. Supported values are `OFF`, `ERROR`, and `DEBUG`.
 
 ### Debug Logging
 
