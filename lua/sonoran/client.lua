@@ -233,6 +233,14 @@ end
 function Client:_resolve_retry_delay_ms(response, attempt)
   local headers = normalize_headers(response and response.headers)
   local retry_after = headers["retry-after"]
+  local remaining_minute = tonumber(headers["x-ratelimit-remaining-minute"])
+
+  if remaining_minute ~= nil and remaining_minute <= 0 and retry_after ~= nil then
+    local retry_after_seconds = tonumber(retry_after)
+    if retry_after_seconds ~= nil and retry_after_seconds >= 0 then
+      return math.floor((retry_after_seconds * 1000) + 0.5)
+    end
+  end
 
   if retry_after ~= nil then
     local retry_after_seconds = tonumber(retry_after)
@@ -297,6 +305,20 @@ function Client:_debug_log_http_response(response, attempt)
   print("[Sonoran.lua][DEBUG]   body: " .. serialize_debug_value(response and response.body))
 end
 
+function Client:_debug_log_rate_limit_retry(response, attempt, delay_ms)
+  if not self:_is_debug_enabled() then
+    return
+  end
+
+  local headers = normalize_headers(response and response.headers)
+  print("[Sonoran.lua][DEBUG] Rate limit retry")
+  print("[Sonoran.lua][DEBUG]   attempt: " .. tostring((attempt or 0) + 1))
+  print("[Sonoran.lua][DEBUG]   status: " .. tostring(response and response.status))
+  print("[Sonoran.lua][DEBUG]   x-ratelimit-remaining-minute: " .. tostring(headers["x-ratelimit-remaining-minute"]))
+  print("[Sonoran.lua][DEBUG]   retry-after: " .. tostring(headers["retry-after"]))
+  print("[Sonoran.lua][DEBUG]   delayMs: " .. tostring(delay_ms))
+end
+
 function Client:_request(method, path, options)
   options = options or {}
 
@@ -346,7 +368,9 @@ function Client:_request(method, path, options)
     end
 
     if status == 429 and attempt < CAD_V2_RATE_LIMIT_MAX_RETRIES then
-      self:_sleep_ms(self:_resolve_retry_delay_ms(response, attempt))
+      local delay_ms = self:_resolve_retry_delay_ms(response, attempt)
+      self:_debug_log_rate_limit_retry(response, attempt, delay_ms)
+      self:_sleep_ms(delay_ms)
     else
       local message = type(parsed) == "table" and parsed.message or nil
       if message == nil and status == 429 then
