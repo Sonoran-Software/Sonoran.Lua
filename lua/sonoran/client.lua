@@ -773,6 +773,9 @@ local function create_client(config, adapter)
   instance.getVersionV2 = function(self)
     return self:_request("GET", "v2/general/version")
   end
+  instance.getTurnCredentialsV2 = function(self, query)
+    return self:_request("GET", "v2/general/turn", { query = query or {} })
+  end
   instance.getServersV2 = function(self)
     return self:_request("GET", "v2/general/servers")
   end

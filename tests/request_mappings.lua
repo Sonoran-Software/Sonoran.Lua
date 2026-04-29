@@ -326,6 +326,12 @@ local cases = {
     url = "https://api.sonorancad.com/v2/general/version"
   },
   {
+    name = "getTurnCredentialsV2",
+    invoke = function() return client.cad:getTurnCredentialsV2({ userId = "unit/1" }) end,
+    method = "GET",
+    url = "https://api.sonorancad.com/v2/general/turn?userId=unit%2F1"
+  },
+  {
     name = "getServersV2",
     invoke = function() return client.cad:getServersV2() end,
     method = "GET",
