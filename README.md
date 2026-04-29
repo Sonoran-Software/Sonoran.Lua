@@ -148,7 +148,7 @@ Civilian endpoint:
 
 ```lua
 local characters = sonoran.cad:getCharactersV2({
-  apiId = "1234567890"
+  roblox = 1234567890
 })
 
 if characters.success then
@@ -171,7 +171,7 @@ local created = sonoran.cad:createDispatchCallV2({
   code = "TS",
   description = "Blue sedan heading north",
   notes = {},
-  apiIds = { "1234567890" }
+  communityUserIds = { "1234567890" }
 })
 
 if not created.success then
@@ -263,7 +263,7 @@ All CAD v2 helpers are available under `client.cad.*`. The root-level methods ar
 ## Notes
 
 - `updateUnitLocationsV2(data)` uses the HTTP v2 endpoint for slower unit location updates.
-- Unit location updates can target `communityUserId` through the v2 HTTP endpoint.
+- Unit location updates can target `communityUserId` or `roblox` through the v2 HTTP endpoint.
 - FiveM uses `PerformHttpRequest`, `promise.new()`, and `Citizen.Await`.
 - Roblox uses `HttpService:RequestAsync()`.
 - Radio, CMS, and legacy CAD endpoints are intentionally out of scope for this initial port.

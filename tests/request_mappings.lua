@@ -202,14 +202,14 @@ local cases = {
     invoke = function() return client.cad:applyPermissionKeyV2({ apiId = "1", permissionKey = "pk" }) end,
     method = "POST",
     url = "https://api.sonorancad.com/v2/general/permission-keys/applications",
-    body = { apiId = "1", permissionKey = "pk" }
+    body = { communityUserId = "1", permissionKey = "pk" }
   },
   {
     name = "banUserV2",
     invoke = function() return client.cad:banUserV2({ apiId = "1", isBan = true }) end,
     method = "POST",
     url = "https://api.sonorancad.com/v2/general/account-bans",
-    body = { apiId = "1", isBan = true }
+    body = { communityUserId = "1", isBan = true }
   },
   {
     name = "setPenalCodesV2",
@@ -236,14 +236,14 @@ local cases = {
     invoke = function() return client.cad:createRecordV2({ apiId = "1", record = { id = 7 } }) end,
     method = "POST",
     url = "https://api.sonorancad.com/v2/general/records",
-    body = { apiId = "1", record = { id = 7 } }
+    body = { communityUserId = "1", record = { id = 7 } }
   },
   {
     name = "updateRecordV2",
     invoke = function() return client.cad:updateRecordV2(77, { apiId = "1" }) end,
     method = "PATCH",
     url = "https://api.sonorancad.com/v2/general/records/77",
-    body = { apiId = "1" }
+    body = { communityUserId = "1" }
   },
   {
     name = "removeRecordV2",
@@ -310,7 +310,7 @@ local cases = {
     invoke = function() return client.cad:setAccountPermissionsV2({ apiId = "1", add = { "A", "B" } }) end,
     method = "PATCH",
     url = "https://api.sonorancad.com/v2/general/accounts/permissions",
-    body = { apiId = "1", add = { "A", "B" } }
+    body = { communityUserId = "1", add = { "A", "B" } }
   },
   {
     name = "heartbeatV2",
@@ -363,7 +363,7 @@ local cases = {
     invoke = function() return client.cad:sendPhotoV2({ apiId = "1", url = "https://img" }) end,
     method = "POST",
     url = "https://api.sonorancad.com/v2/general/photos",
-    body = { apiId = "1", url = "https://img" }
+    body = { communityUserId = "1", url = "https://img" }
   },
   {
     name = "getInfoV2",
@@ -373,9 +373,9 @@ local cases = {
   },
   {
     name = "getCharactersV2",
-    invoke = function() return client.cad:getCharactersV2({ apiId = "a1" }) end,
+    invoke = function() return client.cad:getCharactersV2({ roblox = 123456789 }) end,
     method = "GET",
-    url = "https://api.sonorancad.com/v2/civilian/characters?apiId=a1"
+    url = "https://api.sonorancad.com/v2/civilian/characters?roblox=123456789"
   },
   {
     name = "removeCharacterV2",
@@ -388,7 +388,7 @@ local cases = {
     invoke = function() return client.cad:setSelectedCharacterV2({ characterId = "77", apiId = "a1" }) end,
     method = "PUT",
     url = "https://api.sonorancad.com/v2/civilian/selected-character",
-    body = { characterId = "77", apiId = "a1" }
+    body = { characterId = "77", communityUserId = "a1" }
   },
   {
     name = "getCharacterLinksV2",
@@ -401,14 +401,14 @@ local cases = {
     invoke = function() return client.cad:addCharacterLinkV2("sync/id", { apiId = "a1" }) end,
     method = "PUT",
     url = "https://api.sonorancad.com/v2/civilian/character-links/sync%2Fid",
-    body = { apiId = "a1" }
+    body = { communityUserId = "a1" }
   },
   {
     name = "removeCharacterLinkV2",
     invoke = function() return client.cad:removeCharacterLinkV2("sync/id", { apiId = "a1" }) end,
     method = "DELETE",
     url = "https://api.sonorancad.com/v2/civilian/character-links/sync%2Fid",
-    body = { apiId = "a1" }
+    body = { communityUserId = "a1" }
   },
   {
     name = "getUnitsV2",
@@ -430,31 +430,31 @@ local cases = {
   },
   {
     name = "updateUnitLocationsV2",
-    invoke = function() return client.cad:updateUnitLocationsV2({ serverId = 5, updates = { { communityUserId = "player-1", location = "Main" } } }) end,
+    invoke = function() return client.cad:updateUnitLocationsV2({ serverId = 5, updates = { { roblox = 123456789, location = "Main" } } }) end,
     method = "PATCH",
     url = "https://api.sonorancad.com/v2/emergency/servers/5/unit-locations",
-    body = { updates = { { communityUserId = "player-1", location = "Main" } } }
+    body = { updates = { { roblox = 123456789, location = "Main" } } }
   },
   {
     name = "setUnitPanicV2",
     invoke = function() return client.cad:setUnitPanicV2({ serverId = 5, apiIds = { "1" }, isPanic = true }) end,
     method = "PATCH",
     url = "https://api.sonorancad.com/v2/emergency/servers/5/units/panic",
-    body = { apiIds = { "1" }, isPanic = true }
+    body = { communityUserIds = { "1" }, isPanic = true }
   },
   {
     name = "setUnitStatusV2",
     invoke = function() return client.cad:setUnitStatusV2({ serverId = 5, apiId = "1", status = 2 }) end,
     method = "PATCH",
     url = "https://api.sonorancad.com/v2/emergency/servers/5/units/status",
-    body = { apiId = "1", status = 2 }
+    body = { communityUserId = "1", status = 2 }
   },
   {
     name = "kickUnitV2",
-    invoke = function() return client.cad:kickUnitV2({ serverId = 7, apiId = "1", reason = "spam" }) end,
+    invoke = function() return client.cad:kickUnitV2({ serverId = 7, roblox = 123456789, reason = "spam" }) end,
     method = "DELETE",
     url = "https://api.sonorancad.com/v2/emergency/servers/7/units/kick",
-    body = { apiId = "1", reason = "spam" }
+    body = { roblox = 123456789, reason = "spam" }
   },
   {
     name = "getIdentifiersV2",
@@ -500,7 +500,7 @@ local cases = {
     invoke = function() return client.cad:addIdentifiersToGroupV2({ serverId = 4, groupName = "A Shift", apiIds = { "1" } }) end,
     method = "PUT",
     url = "https://api.sonorancad.com/v2/emergency/servers/4/identifier-groups/A%20Shift",
-    body = { apiIds = { "1" } }
+    body = { communityUserIds = { "1" } }
   },
   {
     name = "createEmergencyCallV2",
@@ -557,14 +557,14 @@ local cases = {
     invoke = function() return client.cad:attachUnitsToDispatchCallV2(14, { serverId = 11, apiIds = { "1", "2" } }) end,
     method = "POST",
     url = "https://api.sonorancad.com/v2/emergency/servers/11/dispatch-calls/14/attachments",
-    body = { apiIds = { "1", "2" } }
+    body = { communityUserIds = { "1", "2" } }
   },
   {
     name = "detachUnitsFromDispatchCallV2",
     invoke = function() return client.cad:detachUnitsFromDispatchCallV2({ serverId = 11, apiIds = { "1" } }) end,
     method = "DELETE",
     url = "https://api.sonorancad.com/v2/emergency/servers/11/dispatch-calls/attachments",
-    body = { apiIds = { "1" } }
+    body = { communityUserIds = { "1" } }
   },
   {
     name = "setDispatchPostalV2",
