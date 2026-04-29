@@ -696,6 +696,28 @@ for _, case in ipairs(cases) do
   assert_response_shape(response, true, case.name)
 end
 
+next_response = {
+  ok = true,
+  status = 200,
+  headers = {
+    ["content-type"] = "application/json; charset=utf-8"
+  },
+  body = "json:ok"
+}
+local normalized_record = client.cad:createRecordV2({
+  useDictionary = true,
+  recordTypeId = 5,
+  replaceValues = {
+    year = 1990,
+    status = true,
+    skip = nil
+  }
+})
+assert_response_shape(normalized_record, true, "createRecordV2 replaceValues normalization")
+assert_equal(last_request.logBody.replaceValues.year, "1990", "createRecordV2 replaceValues year")
+assert_equal(last_request.logBody.replaceValues.status, "true", "createRecordV2 replaceValues status")
+assert_nil(last_request.logBody.replaceValues.skip, "createRecordV2 replaceValues skip")
+
 last_request = nil
 client:_request("GET", "v2/test/query-arrays", {
   query = {
