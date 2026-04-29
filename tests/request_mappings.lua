@@ -658,8 +658,8 @@ local cases = {
   {
     name = "deleteBlipsV2",
     invoke = function() return client.cad:deleteBlipsV2({ 21, 22 }, 11) end,
-    method = "DELETE",
-    url = "https://api.sonorancad.com/v2/emergency/servers/11/blips",
+    method = "POST",
+    url = "https://api.sonorancad.com/v2/emergency/servers/11/blips/delete",
     body = { ids = { 21, 22 } }
   },
 }
