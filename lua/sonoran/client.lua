@@ -360,6 +360,15 @@ function Client:_resolve_server_id(server_id)
   return resolved
 end
 
+function Client:_resolve_server_path_id(server_id)
+  local resolved = server_id
+  if resolved == nil then
+    resolved = self._config.defaultServerId
+  end
+
+  return self:_encode_path_segment(resolved)
+end
+
 function Client:_encode_path_segment(value)
   if value == nil or value == "" then
     error("Path segment is required.")
@@ -1055,58 +1064,70 @@ local function create_client(config, adapter)
   end
 
   instance.getCommunityChannelsV2 = function(self, server_id)
-    local resolved_server_id = self:_resolve_server_id(server_id)
-    return self:_request("GET", "v2/servers/" .. tostring(resolved_server_id) .. "/channels")
+    local resolved_server_id = self:_resolve_server_path_id(server_id)
+    return self:_request("GET", "v2/servers/" .. resolved_server_id .. "/channels")
+  end
+  instance.setZonesV2 = function(self, data)
+    local resolved_server_id = self:_resolve_server_path_id(data and data.serverId)
+    return self:_request("PUT", "v2/servers/" .. resolved_server_id .. "/zones", {
+      body = strip_keys(data, { "serverId", "apiKey", "id", "key" })
+    })
+  end
+  instance.createGuestTokenV2 = function(self, data)
+    local resolved_server_id = self:_resolve_server_path_id(data and data.serverId)
+    return self:_request("POST", "v2/servers/" .. resolved_server_id .. "/guest-tokens", {
+      body = strip_keys(data, { "serverId", "apiKey", "id", "key" })
+    })
   end
   instance.getConnectedUsersV2 = function(self, server_id)
-    local resolved_server_id = self:_resolve_server_id(server_id)
-    return self:_request("GET", "v2/servers/" .. tostring(resolved_server_id) .. "/connected-users")
+    local resolved_server_id = self:_resolve_server_path_id(server_id)
+    return self:_request("GET", "v2/servers/" .. resolved_server_id .. "/connected-users")
   end
   instance.getConnectedUserV2 = function(self, room_id, identity, server_id)
-    local resolved_server_id = self:_resolve_server_id(server_id)
+    local resolved_server_id = self:_resolve_server_path_id(server_id)
     self:_assert_positive_integer(room_id, "roomId")
-    return self:_request("GET", "v2/servers/" .. tostring(resolved_server_id) .. "/rooms/" .. tostring(room_id) .. "/users/" .. self:_encode_path_segment(identity))
+    return self:_request("GET", "v2/servers/" .. resolved_server_id .. "/rooms/" .. tostring(room_id) .. "/users/" .. self:_encode_path_segment(identity))
   end
   instance.setUserChannelsV2 = function(self, room_id, identity, options, server_id)
-    local resolved_server_id = self:_resolve_server_id(server_id)
+    local resolved_server_id = self:_resolve_server_path_id(server_id)
     self:_assert_positive_integer(room_id, "roomId")
-    return self:_request("PATCH", "v2/servers/" .. tostring(resolved_server_id) .. "/rooms/" .. tostring(room_id) .. "/users/" .. self:_encode_path_segment(identity) .. "/channels", {
+    return self:_request("PATCH", "v2/servers/" .. resolved_server_id .. "/rooms/" .. tostring(room_id) .. "/users/" .. self:_encode_path_segment(identity) .. "/channels", {
       body = shallow_copy(options or {})
     })
   end
   instance.setUserDisplayNameV2 = function(self, data)
-    local resolved_server_id = self:_resolve_server_id(data and data.serverId)
-    return self:_request("PATCH", "v2/servers/" .. tostring(resolved_server_id) .. "/users/display-name", {
+    local resolved_server_id = self:_resolve_server_path_id(data and data.serverId)
+    return self:_request("PATCH", "v2/servers/" .. resolved_server_id .. "/users/display-name", {
       body = strip_keys(data, { "serverId" })
     })
   end
   instance.approveMembersV2 = function(self, acc_ids, server_id)
-    local resolved_server_id = self:_resolve_server_id(server_id)
-    return self:_request("POST", "v2/servers/" .. tostring(resolved_server_id) .. "/members/approve", {
+    local resolved_server_id = self:_resolve_server_path_id(server_id)
+    return self:_request("POST", "v2/servers/" .. resolved_server_id .. "/members/approve", {
       body = { accIds = acc_ids }
     })
   end
   instance.kickMembersV2 = function(self, acc_ids, server_id)
-    local resolved_server_id = self:_resolve_server_id(server_id)
-    return self:_request("POST", "v2/servers/" .. tostring(resolved_server_id) .. "/members/kick", {
+    local resolved_server_id = self:_resolve_server_path_id(server_id)
+    return self:_request("POST", "v2/servers/" .. resolved_server_id .. "/members/kick", {
       body = { accIds = acc_ids }
     })
   end
   instance.banMembersV2 = function(self, acc_ids, server_id)
-    local resolved_server_id = self:_resolve_server_id(server_id)
-    return self:_request("POST", "v2/servers/" .. tostring(resolved_server_id) .. "/members/ban", {
+    local resolved_server_id = self:_resolve_server_path_id(server_id)
+    return self:_request("POST", "v2/servers/" .. resolved_server_id .. "/members/ban", {
       body = { accIds = acc_ids }
     })
   end
   instance.setMemberDisplayNamesV2 = function(self, acc_nicknames, server_id)
-    local resolved_server_id = self:_resolve_server_id(server_id)
-    return self:_request("PATCH", "v2/servers/" .. tostring(resolved_server_id) .. "/members/display-names", {
+    local resolved_server_id = self:_resolve_server_path_id(server_id)
+    return self:_request("PATCH", "v2/servers/" .. resolved_server_id .. "/members/display-names", {
       body = { accNicknames = acc_nicknames }
     })
   end
   instance.setMemberPermissionsV2 = function(self, user_perms, server_id)
-    local resolved_server_id = self:_resolve_server_id(server_id)
-    return self:_request("PATCH", "v2/servers/" .. tostring(resolved_server_id) .. "/members/permissions", {
+    local resolved_server_id = self:_resolve_server_path_id(server_id)
+    return self:_request("PATCH", "v2/servers/" .. resolved_server_id .. "/members/permissions", {
       body = { userPerms = user_perms }
     })
   end
@@ -1116,21 +1137,21 @@ local function create_client(config, adapter)
     })
   end
   instance.setServerIpV2 = function(self, data)
-    local resolved_server_id = self:_resolve_server_id(data and data.serverId)
-    return self:_request("POST", "v2/servers/" .. tostring(resolved_server_id) .. "/server-ip", {
-      body = strip_keys(data, { "serverId" })
+    local resolved_server_id = self:_resolve_server_path_id(data and data.serverId)
+    return self:_request("POST", "v2/servers/" .. resolved_server_id .. "/server-ip", {
+      body = strip_keys(data, { "serverId", "apiKey", "id", "key" })
     })
   end
   instance.setInGameSpeakerLocationsV2 = function(self, locations, server_id)
-    local resolved_server_id = self:_resolve_server_id(server_id)
-    return self:_request("PUT", "v2/servers/" .. tostring(resolved_server_id) .. "/speakers", {
+    local resolved_server_id = self:_resolve_server_path_id(server_id)
+    return self:_request("PUT", "v2/servers/" .. resolved_server_id .. "/speakers", {
       body = { locations = locations }
     })
   end
   instance.playToneV2 = function(self, room_id, tones, play_to, server_id)
-    local resolved_server_id = self:_resolve_server_id(server_id)
+    local resolved_server_id = self:_resolve_server_path_id(server_id)
     self:_assert_positive_integer(room_id, "roomId")
-    return self:_request("POST", "v2/servers/" .. tostring(resolved_server_id) .. "/tones/play", {
+    return self:_request("POST", "v2/servers/" .. resolved_server_id .. "/tones/play", {
       body = {
         roomId = room_id,
         tones = tones,
@@ -1310,6 +1331,49 @@ local function create_client(config, adapter)
   instance.cancelSessionV2 = function(self, data)
     return self:_request("DELETE", "v2/community/sessions", { body = data })
   end
+
+  local public_methods = {
+    setLogLevel = Client.setLogLevel
+  }
+
+  for key, value in pairs(instance) do
+    if type(value) == "function" and not starts_with(key, "_") then
+      public_methods[key] = value
+    end
+  end
+
+  local function bind_public_method(name, method)
+    local bound
+    bound = function(first, ...)
+      if type(first) == "table" and (first.__sonoranClient == true or first.__sonoranNamespace == true or type(first[name]) == "function") then
+        return method(instance, ...)
+      end
+
+      return method(instance, first, ...)
+    end
+    return bound
+  end
+
+  local function create_namespace()
+    local namespace = {
+      __sonoranNamespace = true
+    }
+
+    for key, method in pairs(public_methods) do
+      namespace[key] = bind_public_method(key, method)
+    end
+
+    return namespace
+  end
+
+  instance.__sonoranClient = true
+  for key, method in pairs(public_methods) do
+    instance[key] = bind_public_method(key, method)
+  end
+
+  instance.cad = create_namespace()
+  instance.cms = create_namespace()
+  instance.radio = create_namespace()
 
   return instance
 end
