@@ -212,6 +212,7 @@ All CAD v2 helpers are available under `client.cad.*`. The root-level methods ar
 - `authorizeStreetSignsV2(serverId?)`
 - `setPostalsV2(postals)`
 - `sendPhotoV2(data)`
+- `uploadBodycamRecordingV2(data)`
 - `getInfoV2()`
 
 ### Civilian

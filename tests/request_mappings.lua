@@ -372,6 +372,30 @@ local cases = {
     body = { communityUserId = "1", url = "https://img" }
   },
   {
+    name = "uploadBodycamRecordingV2",
+    invoke = function()
+      return client.cad:uploadBodycamRecordingV2({
+        apiId = "1",
+        durationMs = 90000,
+        identId = 123,
+        unitNumber = "1A-12",
+        unitLocation = "Senora Fwy / Route 68",
+        fileName = "bodycam-clip.webm",
+        fileContent = "webm-data"
+      })
+    end,
+    method = "POST",
+    url = "https://api.sonorancad.com/v2/general/bodycam-recordings",
+    assert_request = function(request)
+      assert_equal(request.headers["Authorization"], "Bearer test-key", "uploadBodycamRecordingV2 auth")
+      assert_contains(request.headers["Content-Type"], "multipart/form-data; boundary=----SonoranLuaBodycamBoundary7MA4YWxkTrZu0gW", "uploadBodycamRecordingV2 content type")
+      assert_contains(request.body, 'name="communityUserId"', "uploadBodycamRecordingV2 communityUserId field")
+      assert_contains(request.body, 'name="durationMs"', "uploadBodycamRecordingV2 duration field")
+      assert_contains(request.body, 'name="file"; filename="bodycam-clip.webm"', "uploadBodycamRecordingV2 file field")
+      assert_contains(request.body, "webm-data", "uploadBodycamRecordingV2 file content")
+    end
+  },
+  {
     name = "getInfoV2",
     invoke = function() return client.cad:getInfoV2() end,
     method = "GET",
