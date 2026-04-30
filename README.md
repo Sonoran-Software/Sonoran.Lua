@@ -255,6 +255,7 @@ All CAD v2 helpers are available under `client.cad.*`. The root-level methods ar
 - `getPagerConfigV2(serverId?)`
 - `setPagerConfigV2(data)`
 - `setStationsV2(config, serverId?)`
+  Expects the inner `config` object, not the full OpenAPI request body. The client also accepts `{ config = ... }` for compatibility and normalizes singular `locations`, `tones`, and `unitColors` values into arrays.
 - `getBlipsV2(serverId?)`
 - `createBlipV2(data)`
 - `updateBlipV2(blipId, data)`

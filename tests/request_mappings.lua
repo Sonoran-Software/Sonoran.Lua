@@ -642,6 +642,62 @@ local cases = {
     body = { config = { enabled = true } }
   },
   {
+    name = "setStationsV2 unwraps OpenAPI body",
+    invoke = function()
+      return client.cad:setStationsV2({
+        config = {
+          locations = {
+            name = "Mission Row",
+            icon = "fas fa-building"
+          },
+          tones = "tone_station_open.mp3",
+          unitColors = "#2563eb"
+        }
+      }, 11)
+    end,
+    method = "PUT",
+    url = "https://api.sonorancad.com/v2/emergency/servers/11/stations",
+    body = {
+      config = {
+        locations = {
+          {
+            name = "Mission Row",
+            icon = "fas fa-building"
+          }
+        },
+        tones = { "tone_station_open.mp3" },
+        unitColors = { "#2563eb" }
+      }
+    }
+  },
+  {
+    name = "setStationsV2 wraps singular values",
+    invoke = function()
+      return client.cad:setStationsV2({
+        locations = {
+          name = "Mission Row",
+          icon = "fas fa-building"
+        },
+        tones = "tone_station_open.mp3",
+        unitColors = "#2563eb"
+      }, 11)
+    end,
+    method = "PUT",
+    url = "https://api.sonorancad.com/v2/emergency/servers/11/stations",
+    body = {
+      config = {
+        locations = {
+          {
+            name = "Mission Row",
+            icon = "fas fa-building"
+          }
+        },
+        tones = { "tone_station_open.mp3" },
+        unitColors = { "#2563eb" }
+      }
+    }
+  },
+  {
     name = "getBlipsV2",
     invoke = function() return client.cad:getBlipsV2(11) end,
     method = "GET",
