@@ -458,7 +458,7 @@ local cases = {
   {
     name = "kickUnitV2",
     invoke = function() return client.cad:kickUnitV2({ serverId = 7, roblox = 123456789, reason = "spam" }) end,
-    method = "DELETE",
+    method = "POST",
     url = "https://api.sonorancad.com/v2/emergency/servers/7/units/kick",
     body = { roblox = 123456789, reason = "spam" }
   },

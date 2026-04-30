@@ -875,7 +875,7 @@ local function create_client(config, adapter)
   instance.kickUnitV2 = function(self, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     local target = normalize_v2_target_aliases(data or {})
-    return self:_request("DELETE", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/units/kick", {
+    return self:_request("POST", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/units/kick", {
       body = {
         communityUserId = target and target.communityUserId or nil,
         roblox = target and target.roblox or nil,
