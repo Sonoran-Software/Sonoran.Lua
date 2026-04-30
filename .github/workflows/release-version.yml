@@ -108,10 +108,10 @@ jobs:
       - name: Dispatch SonoranCADFiveM sync
         if: success()
         env:
-          DISPATCH_TOKEN: ${{ secrets.SONORAN_REPO_DISPATCH_TOKEN }}
+          DISPATCH_TOKEN: ${{ secrets.FIVEM_INTEGRATION_TRIGGER_TOKEN }}
         run: |
           if [ -z "$DISPATCH_TOKEN" ]; then
-            echo "SONORAN_REPO_DISPATCH_TOKEN is not configured; skipping SonoranCADFiveM sync dispatch."
+            echo "FIVEM_INTEGRATION_TRIGGER_TOKEN is not configured; skipping SonoranCADFiveM sync dispatch."
             exit 0
           fi
 
