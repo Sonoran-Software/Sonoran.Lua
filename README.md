@@ -92,7 +92,7 @@ sonoran:setLogLevel(Sonoran.logLevels.DEBUG)
 - `product`: required; currently must be `Sonoran.productEnums.CAD`.
 - `communityId`: optional; used by `getLoginPageV2()` when no explicit `communityId` is supplied.
 - `apiUrl`: optional; defaults to `https://api.sonorancad.com`.
-- `defaultServerId`: optional; defaults to `1`.
+- `defaultServerId`: optional; defaults to `1` for CAD/CMS-style server-scoped helpers. Radio v2 helpers resolve the community route from `communityId` and use explicit `roomId` values for room-scoped operations.
 - `headers`: optional extra headers merged into every request.
 - `timeoutMs`: optional timeout for the FiveM adapter; defaults to `30000`.
 - `logLevel`: optional; `Sonoran.logLevels.ERROR` by default. Supported values are `OFF`, `ERROR`, and `DEBUG`.
