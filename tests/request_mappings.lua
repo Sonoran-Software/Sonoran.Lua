@@ -797,6 +797,18 @@ local radio_cases = {
     }
   },
   {
+    name = "radio approveMembersV2",
+    invoke = function()
+      return radio_client.radio:approveMembersV2({ "user-1" })
+    end,
+    method = "POST",
+    url = "https://api.sonoranradio.com/v2/servers/radio-community/members/approve",
+    body = {
+      roomId = 2,
+      accIds = { "user-1" }
+    }
+  },
+  {
     name = "radio playToneV2",
     invoke = function()
       return radio_client.radio:playToneV2({ 12 }, { { type = "channel", value = 101 } })
