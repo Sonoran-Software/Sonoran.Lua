@@ -179,15 +179,20 @@ assert_equal(missing_product_ok, false, "missing product should fail")
 assert_contains(missing_product_error, "product is required when instancing.", "missing product error")
 
 local unsupported_product_ok, unsupported_product_error = pcall(create_client, {
-  product = product_enums.CMS,
+  product = 99,
   apiKey = "test-key",
   communityId = "community-123"
 }, fake_adapter)
 assert_equal(unsupported_product_ok, false, "unsupported product should fail")
-assert_contains(unsupported_product_error, "Only productEnums.CAD and productEnums.RADIO are currently supported in Sonoran.lua.", "unsupported product error")
+assert_contains(unsupported_product_error, "Only productEnums.CAD, productEnums.CMS, and productEnums.RADIO are currently supported in Sonoran.lua.", "unsupported product error")
 
 assert_truthy(type(client.cad) == "table", "cad namespace exists")
 assert_truthy(client.cad ~= client, "cad namespace is distinct from root client")
+assert_truthy(type(rawget(client.cad, "createRecordV2")) == "function", "cad namespace has concrete methods")
+assert_nil(getmetatable(client.cad), "cad namespace does not require metatable lookup")
+assert_truthy(type(rawget(client.cms, "createRecordV2")) == "function", "cms namespace has concrete methods")
+assert_truthy(type(rawget(radio_client.radio, "getChannelsV2")) == "function", "radio namespace has concrete methods")
+assert_truthy(radio_client.radio ~= radio_client.cad, "radio namespace is distinct from cad namespace")
 
 local invalid_log_level_ok, invalid_log_level_error = pcall(function()
   client:setLogLevel("TRACE")
