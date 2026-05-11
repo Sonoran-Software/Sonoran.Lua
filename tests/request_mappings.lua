@@ -159,6 +159,18 @@ local client = create_client({
   timeoutMs = 12345
 }, fake_adapter)
 
+local radio_client = create_client({
+  product = product_enums.RADIO,
+  apiKey = "radio-key",
+  communityId = "radio-community",
+  roomId = 2,
+  apiUrl = "https://api.sonoranradio.com/",
+  headers = {
+    ["X-Test"] = "yes"
+  },
+  timeoutMs = 12345
+}, fake_adapter)
+
 local missing_product_ok, missing_product_error = pcall(create_client, {
   apiKey = "test-key",
   communityId = "community-123"
@@ -749,6 +761,76 @@ for _, case in ipairs(cases) do
     assert_equal(last_request.headers["Content-Type"], "application/json", case.name .. " content type")
   end
 
+  assert_body(case.body, case.name)
+  assert_response_shape(response, true, case.name)
+end
+
+local radio_cases = {
+  {
+    name = "radio getConnectedUsersV2",
+    invoke = function() return radio_client.radio:getConnectedUsersV2() end,
+    method = "GET",
+    url = "https://api.sonoranradio.com/v2/servers/radio-community/connected-users"
+  },
+  {
+    name = "radio getConnectedUserV2",
+    invoke = function() return radio_client.radio:getConnectedUserV2("user/1") end,
+    method = "GET",
+    url = "https://api.sonoranradio.com/v2/servers/radio-community/rooms/2/users/user%2F1"
+  },
+  {
+    name = "radio setServerIpV2",
+    invoke = function()
+      return radio_client.radio:setServerIpV2({
+        serverPort = 30120,
+        pushUrl = "http://127.0.0.1:30120/sonoranradio",
+        nickname = "Patrol"
+      })
+    end,
+    method = "POST",
+    url = "https://api.sonoranradio.com/v2/servers/radio-community/server-ip",
+    body = {
+      roomId = 2,
+      serverPort = 30120,
+      pushUrl = "http://127.0.0.1:30120/sonoranradio",
+      nickname = "Patrol"
+    }
+  },
+  {
+    name = "radio playToneV2",
+    invoke = function()
+      return radio_client.radio:playToneV2({ 12 }, { { type = "channel", value = 101 } })
+    end,
+    method = "POST",
+    url = "https://api.sonoranradio.com/v2/servers/radio-community/tones/play",
+    body = {
+      roomId = 2,
+      tones = { 12 },
+      playTo = { { type = "channel", value = 101 } }
+    }
+  }
+}
+
+for _, case in ipairs(radio_cases) do
+  next_response = {
+    ok = true,
+    status = 200,
+    headers = {
+      ["content-type"] = "application/json; charset=utf-8"
+    },
+    body = "json:ok"
+  }
+
+  last_request = nil
+  local response = case.invoke()
+  assert_equal(last_request.method, case.method, case.name .. " method")
+  assert_equal(last_request.url, case.url, case.name .. " url")
+  assert_equal(last_request.timeoutMs, 12345, case.name .. " timeout")
+  assert_equal(last_request.headers["Authorization"], "Bearer radio-key", case.name .. " auth header")
+  assert_equal(last_request.headers["X-Test"], "yes", case.name .. " passthrough header")
+  if case.body ~= nil then
+    assert_equal(last_request.headers["Content-Type"], "application/json", case.name .. " content type")
+  end
   assert_body(case.body, case.name)
   assert_response_shape(response, true, case.name)
 end
