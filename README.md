@@ -68,6 +68,7 @@ local sonoran = exports["Sonoran.lua"]:createClient({
 })
 
 sonoran:setLogLevel(Sonoran.logLevels.DEBUG)
+sonoran:setRoomId(1)
 ```
 
 Roblox usage:
@@ -104,6 +105,12 @@ Use `setLogLevel()` to toggle HTTP debug output at runtime:
 
 ```lua
 sonoran:setLogLevel(Sonoran.logLevels.DEBUG)
+```
+
+Use `setRoomId()` to update the Radio room used by later room-scoped requests without creating a new client:
+
+```lua
+sonoran:setRoomId(1)
 ```
 
 Use `ERROR` to only print failed requests and rate-limit events:

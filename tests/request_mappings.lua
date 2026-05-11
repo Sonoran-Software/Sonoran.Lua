@@ -847,6 +847,42 @@ for _, case in ipairs(radio_cases) do
   assert_response_shape(response, true, case.name)
 end
 
+radio_client:setRoomId(7)
+next_response = {
+  ok = true,
+  status = 200,
+  headers = {
+    ["content-type"] = "application/json; charset=utf-8"
+  },
+  body = "json:ok"
+}
+last_request = nil
+local updated_room_path_response = radio_client.radio:getConnectedUserV2("user/1")
+assert_equal(last_request.url, "https://api.sonoranradio.com/v2/servers/radio-community/rooms/7/users/user%2F1", "setRoomId updates radio path")
+assert_response_shape(updated_room_path_response, true, "setRoomId updates radio path")
+
+next_response = {
+  ok = true,
+  status = 200,
+  headers = {
+    ["content-type"] = "application/json; charset=utf-8"
+  },
+  body = "json:ok"
+}
+last_request = nil
+local updated_room_body_response = radio_client.radio:approveMembersV2({ "user-1" })
+assert_body({
+  roomId = 7,
+  accIds = { "user-1" }
+}, "setRoomId updates radio body")
+assert_response_shape(updated_room_body_response, true, "setRoomId updates radio body")
+
+local invalid_room_ok, invalid_room_error = pcall(function()
+  radio_client:setRoomId(0)
+end)
+assert_equal(invalid_room_ok, false, "invalid setRoomId should fail")
+assert_contains(tostring(invalid_room_error), "roomId must be a positive integer.", "invalid setRoomId error")
+
 next_response = {
   ok = true,
   status = 200,
