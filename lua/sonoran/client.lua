@@ -769,7 +769,7 @@ local function create_client(config, adapter)
       communityId = config and config.communityId or nil,
       apiUrl = trim_trailing_slashes(config and config.apiUrl or (product == 2 and "https://api.sonoranradio.com" or product == 1 and "https://api.sonorancms.com" or "https://api.sonorancad.com")),
       defaultServerId = config and config.defaultServerId or 1,
-      roomId = config and config.roomId or nil,
+      roomId = config and (config.radioRoomId or config.roomId) or nil,
       headers = shallow_copy(config and config.headers or {}),
       timeoutMs = config and config.timeoutMs or 30000,
       logLevel = LOG_LEVELS.ERROR

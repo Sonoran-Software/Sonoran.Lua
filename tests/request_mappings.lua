@@ -888,6 +888,31 @@ end)
 assert_equal(invalid_room_ok, false, "invalid setRoomId should fail")
 assert_contains(tostring(invalid_room_error), "roomId must be a positive integer.", "invalid setRoomId error")
 
+local alias_radio_client = create_client({
+  product = product_enums.RADIO,
+  apiKey = "radio-key",
+  communityId = "radio-community",
+  radioRoomId = 9
+}, fake_adapter)
+alias_radio_client.radio = alias_radio_client
+
+next_response = {
+  ok = true,
+  status = 200,
+  headers = {
+    ["content-type"] = "application/json; charset=utf-8"
+  },
+  body = "json:ok"
+}
+last_request = nil
+local alias_room_response = alias_radio_client.radio:playToneV2({ 12 }, { { type = "channel", value = 101 } })
+assert_body({
+  roomId = 9,
+  tones = { 12 },
+  playTo = { { type = "channel", value = 101 } }
+}, "radioRoomId alias updates radio tone body")
+assert_response_shape(alias_room_response, true, "radioRoomId alias updates radio tone body")
+
 next_response = {
   ok = true,
   status = 200,
