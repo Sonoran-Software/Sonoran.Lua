@@ -498,10 +498,10 @@ local cases = {
   },
   {
     name = "kickUnitV2",
-    invoke = function() return client.cad:kickUnitV2({ serverId = 7, roblox = 123456789, reason = "spam" }) end,
+    invoke = function() return client.cad:kickUnitV2({ serverId = 7, discord = "123456789012345678", reason = "spam" }) end,
     method = "POST",
     url = "https://api.sonorancad.com/v2/emergency/servers/7/units/kick",
-    body = { roblox = 123456789, reason = "spam" }
+    body = { discord = "123456789012345678", reason = "spam" }
   },
   {
     name = "getIdentifiersV2",

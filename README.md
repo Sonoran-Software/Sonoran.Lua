@@ -272,8 +272,9 @@ All CAD v2 helpers are available under `client.cad.*`. The root-level methods ar
 
 ## Notes
 
-- `updateUnitLocationsV2(data)` uses the HTTP v2 endpoint for slower unit location updates, and each update can target `communityUserId` or `roblox`.
-- Unit location updates can target `communityUserId` or `roblox` through the v2 HTTP endpoint.
+- Account-targeted CAD v2 helpers accept `accountUuid`, `communityUserId`, `roblox`, `discord`, and legacy `apiId` where supported by the backend.
+- `updateUnitLocationsV2(data)` uses the HTTP v2 endpoint for slower unit location updates, and each update can target `communityUserId`, `roblox`, or `discord`.
+- Unit location updates can target `communityUserId`, `roblox`, or `discord` through the v2 HTTP endpoint.
 - FiveM uses `PerformHttpRequest`, `promise.new()`, and `Citizen.Await`.
 - Roblox uses `HttpService:RequestAsync()`.
 - Radio, CMS, and legacy CAD endpoints are intentionally out of scope for this initial port.
