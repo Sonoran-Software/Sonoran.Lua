@@ -5,13 +5,28 @@ local function encode_uri_component(value)
 end
 
 local function perform_request(options, callback)
-  PerformHttpRequest(
-    options.url,
-    callback,
-    options.method or "GET",
-    options.body,
-    options.headers or {}
-  )
+  local ok = pcall(function()
+    local resource_name = GetCurrentResourceName and GetCurrentResourceName() or nil
+    if resource_name ~= nil and exports ~= nil and exports[resource_name] ~= nil and exports[resource_name].HandleHttpRequest ~= nil then
+      exports[resource_name]:HandleHttpRequest(
+        options.url,
+        callback,
+        options.method or "GET",
+        options.body,
+        options.headers or {}
+      )
+    end
+  end)
+
+  if not ok then
+    PerformHttpRequest(
+      options.url,
+      callback,
+      options.method or "GET",
+      options.body,
+      options.headers or {}
+    )
+  end
 end
 
 return function()

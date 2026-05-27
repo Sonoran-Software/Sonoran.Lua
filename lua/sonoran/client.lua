@@ -72,6 +72,41 @@ local function normalize_v2_target_aliases(value)
   return copy
 end
 
+local function build_multipart_form_data(fields, file_name, file_content, content_type)
+  if type(file_name) ~= "string" or file_name == "" then
+    error("fileName is required when uploading a bodycam recording.")
+  end
+
+  if type(file_content) ~= "string" then
+    error("fileContent must be a string when uploading a bodycam recording.")
+  end
+
+  local boundary = "----SonoranLuaBodycamBoundary7MA4YWxkTrZu0gW"
+  local parts = {}
+
+  local function append(value)
+    parts[#parts + 1] = value
+  end
+
+  for key, value in pairs(fields or {}) do
+    if value ~= nil then
+      append("--" .. boundary .. "\r\n")
+      append('Content-Disposition: form-data; name="' .. tostring(key) .. '"\r\n\r\n')
+      append(tostring(value))
+      append("\r\n")
+    end
+  end
+
+  append("--" .. boundary .. "\r\n")
+  append('Content-Disposition: form-data; name="file"; filename="' .. file_name .. '"\r\n')
+  append("Content-Type: " .. tostring(content_type or "video/webm") .. "\r\n\r\n")
+  append(file_content)
+  append("\r\n")
+  append("--" .. boundary .. "--\r\n")
+
+  return boundary, table.concat(parts)
+end
+
 local function stringify_table_values(value)
   if type(value) ~= "table" then
     return value
@@ -113,6 +148,18 @@ local function normalize_record_replace_values_body(body, encode)
   local copy = shallow_copy(body)
   copy.replaceValues = normalize_replace_values(body.replaceValues, encode)
   return copy
+end
+
+local function wrap_singleton_array(value)
+  if value == nil then
+    return nil
+  end
+
+  if type(value) == "table" and is_array(value) then
+    return value
+  end
+
+  return { value }
 end
 
 local function normalize_headers(headers)
@@ -360,13 +407,38 @@ function Client:_resolve_server_id(server_id)
   return resolved
 end
 
-function Client:_resolve_server_path_id(server_id)
-  local resolved = server_id
+function Client:_resolve_radio_community_id(community_id)
+  local resolved = community_id
   if resolved == nil then
-    resolved = self._config.defaultServerId
+    resolved = self._config.communityId
   end
 
-  return self:_encode_path_segment(resolved)
+  if type(resolved) == "string" then
+    resolved = resolved:match("^%s*(.-)%s*$")
+    if resolved == "" then
+      error("communityId is required.")
+    end
+    return resolved
+  end
+
+  self:_assert_positive_integer(resolved, "communityId")
+  return resolved
+end
+
+function Client:_resolve_radio_room_id()
+  local resolved = self._config.roomId
+  if resolved == nil then
+    error("roomId is required for Radio v2 room-scoped requests.")
+  end
+
+  self:_assert_positive_integer(resolved, "roomId")
+  return resolved
+end
+
+function Client:_with_radio_room_id(body)
+  local with_room_id = shallow_copy(body or {})
+  with_room_id.roomId = self:_resolve_radio_room_id()
+  return with_room_id
 end
 
 function Client:_encode_path_segment(value)
@@ -462,6 +534,11 @@ function Client:setLogLevel(level)
   return self
 end
 
+function Client:setRoomId(room_id)
+  self._config.roomId = self:_assert_positive_integer(room_id, "roomId")
+  return self
+end
+
 function Client:_is_debug_enabled()
   return self._config.logLevel == LOG_LEVELS.DEBUG
 end
@@ -532,8 +609,12 @@ function Client:_request(method, path, options)
   end
 
   local body = options.body
+  local raw_body = options.rawBody
   local encoded_body
-  if body ~= nil then
+  if raw_body ~= nil then
+    headers["Content-Type"] = options.contentType or "application/octet-stream"
+    encoded_body = raw_body
+  elseif body ~= nil then
     headers["Content-Type"] = "application/json"
     encoded_body = self._adapter.encode(body)
   end
@@ -543,7 +624,7 @@ function Client:_request(method, path, options)
     url = build_url(self._config.apiUrl, path, options.query, self._adapter.encodeURIComponent),
     headers = headers,
     body = encoded_body,
-    logBody = body,
+    logBody = options.logBody ~= nil and options.logBody or body,
     timeoutMs = self._config.timeoutMs
   }
 
@@ -662,6 +743,7 @@ local function create_client(config, adapter)
       communityId = config and config.communityId or nil,
       apiUrl = trim_trailing_slashes(config and config.apiUrl or (product == 2 and "https://api.sonoranradio.com" or product == 1 and "https://api.sonorancms.com" or "https://api.sonorancad.com")),
       defaultServerId = config and config.defaultServerId or 1,
+      roomId = config and (config.radioRoomId or config.roomId) or nil,
       headers = shallow_copy(config and config.headers or {}),
       timeoutMs = config and config.timeoutMs or 30000,
       logLevel = LOG_LEVELS.ERROR
@@ -671,36 +753,6 @@ local function create_client(config, adapter)
   if config and config.logLevel ~= nil then
     instance:setLogLevel(config.logLevel)
   end
-
-  local cad_proxy = setmetatable({}, {
-    __index = function(_, key)
-      local value = instance[key]
-      if type(value) == "function" then
-        return function(_, ...)
-          return value(instance, ...)
-        end
-      end
-
-      return value
-    end
-  })
-
-  instance.cad = cad_proxy
-  local cms_proxy = setmetatable({}, {
-    __index = function(_, key)
-      local value = instance[key]
-      if type(value) == "function" then
-        return function(_, ...)
-          return value(instance, ...)
-        end
-      end
-
-      return value
-    end
-  })
-
-  instance.cms = cms_proxy
-  instance.radio = cad_proxy
 
   instance.getLoginPageV2 = function(self, params)
     params = params or {}
@@ -782,6 +834,9 @@ local function create_client(config, adapter)
   instance.getVersionV2 = function(self)
     return self:_request("GET", "v2/general/version")
   end
+  instance.getTurnCredentialsV2 = function(self, query)
+    return self:_request("GET", "v2/general/turn", { query = query or {} })
+  end
   instance.getServersV2 = function(self)
     return self:_request("GET", "v2/general/servers")
   end
@@ -797,6 +852,7 @@ local function create_client(config, adapter)
     return self:_request("POST", "v2/general/secrets/verify", { body = { secret = secret } })
   end
   instance.authorizeStreetSignsV2 = function(self, server_id)
+    local server_id = tonumber(server_id)
     local resolved_server_id = self:_resolve_server_id(server_id)
     return self:_request("POST", "v2/general/servers/" .. tostring(resolved_server_id) .. "/street-sign-auth")
   end
@@ -805,6 +861,28 @@ local function create_client(config, adapter)
   end
   instance.sendPhotoV2 = function(self, data)
     return self:_request("POST", "v2/general/photos", { body = normalize_v2_target_aliases(data) })
+  end
+  instance.uploadBodycamRecordingV2 = function(self, data)
+    local payload = normalize_v2_target_aliases(shallow_copy(data or {}))
+    local file_name = payload.fileName
+    local file_content = payload.fileContent
+    local content_type = payload.contentType or "video/webm"
+
+    payload.fileName = nil
+    payload.fileContent = nil
+    payload.contentType = nil
+
+    local boundary, multipart_body = build_multipart_form_data(payload, file_name, file_content, content_type)
+    return self:_request("POST", "v2/general/bodycam-recordings", {
+      rawBody = multipart_body,
+      contentType = "multipart/form-data; boundary=" .. boundary,
+      logBody = {
+        fields = payload,
+        fileName = file_name,
+        contentType = content_type,
+        fileSize = type(file_content) == "string" and #file_content or nil
+      }
+    })
   end
   instance.getInfoV2 = function(self)
     return self:_request("GET", "v2/general/info")
@@ -881,10 +959,11 @@ local function create_client(config, adapter)
   instance.kickUnitV2 = function(self, data)
     local resolved_server_id = self:_resolve_server_id(data and data.serverId)
     local target = normalize_v2_target_aliases(data or {})
-    return self:_request("DELETE", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/units/kick", {
+    return self:_request("POST", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/units/kick", {
       body = {
         communityUserId = target and target.communityUserId or nil,
         roblox = target and target.roblox or nil,
+        discord = target and target.discord or nil,
         reason = data and data.reason or nil
       }
     })
@@ -1036,7 +1115,7 @@ local function create_client(config, adapter)
   instance.setStationsV2 = function(self, config_value, server_id)
     local resolved_server_id = self:_resolve_server_id(server_id)
     return self:_request("PUT", "v2/emergency/servers/" .. tostring(resolved_server_id) .. "/stations", {
-      body = { config = config_value }
+      body = config_value
     })
   end
   instance.getBlipsV2 = function(self, server_id)
@@ -1063,72 +1142,84 @@ local function create_client(config, adapter)
     })
   end
 
-  instance.getCommunityChannelsV2 = function(self, server_id)
-    local resolved_server_id = self:_resolve_server_path_id(server_id)
-    return self:_request("GET", "v2/servers/" .. resolved_server_id .. "/channels")
+  instance.getCommunityChannelsV2 = function(self, community_id)
+    local resolved_community_id = self:_resolve_radio_community_id(community_id)
+    return self:_request("GET", "v2/servers/" .. tostring(resolved_community_id) .. "/channels")
   end
   instance.setZonesV2 = function(self, data)
-    local resolved_server_id = self:_resolve_server_path_id(data and data.serverId)
-    return self:_request("PUT", "v2/servers/" .. resolved_server_id .. "/zones", {
+    local resolved_community_id = self:_resolve_radio_community_id(community_id)
+    return self:_request("PUT", "v2/servers/" .. resolved_community_id .. "/zones", {
       body = strip_keys(data, { "serverId", "apiKey", "id", "key" })
     })
   end
   instance.createGuestTokenV2 = function(self, data)
-    local resolved_server_id = self:_resolve_server_path_id(data and data.serverId)
-    return self:_request("POST", "v2/servers/" .. resolved_server_id .. "/guest-tokens", {
+    local resolved_community_id = self:_resolve_radio_community_id(community_id)
+    return self:_request("POST", "v2/servers/" .. resolved_community_id .. "/guest-tokens", {
       body = strip_keys(data, { "serverId", "apiKey", "id", "key" })
     })
   end
-  instance.getConnectedUsersV2 = function(self, server_id)
-    local resolved_server_id = self:_resolve_server_path_id(server_id)
-    return self:_request("GET", "v2/servers/" .. resolved_server_id .. "/connected-users")
+  instance.getConnectedUsersV2 = function(self, community_id)
+    local resolved_community_id = self:_resolve_radio_community_id(community_id)
+    return self:_request("GET", "v2/servers/" .. tostring(resolved_community_id) .. "/connected-users")
   end
-  instance.getConnectedUserV2 = function(self, room_id, identity, server_id)
-    local resolved_server_id = self:_resolve_server_path_id(server_id)
-    self:_assert_positive_integer(room_id, "roomId")
-    return self:_request("GET", "v2/servers/" .. resolved_server_id .. "/rooms/" .. tostring(room_id) .. "/users/" .. self:_encode_path_segment(identity))
+  instance.getMembersV2 = function(self, query, community_id)
+    local resolved_community_id = self:_resolve_radio_community_id(community_id)
+    return self:_request("GET", "v2/servers/" .. tostring(resolved_community_id) .. "/members", {
+      query = shallow_copy(query or {})
+    })
   end
-  instance.setUserChannelsV2 = function(self, room_id, identity, options, server_id)
-    local resolved_server_id = self:_resolve_server_path_id(server_id)
-    self:_assert_positive_integer(room_id, "roomId")
-    return self:_request("PATCH", "v2/servers/" .. resolved_server_id .. "/rooms/" .. tostring(room_id) .. "/users/" .. self:_encode_path_segment(identity) .. "/channels", {
-      body = shallow_copy(options or {})
+  instance.getConnectedUserV2 = function(self, identity, community_id)
+    local resolved_community_id = self:_resolve_radio_community_id(community_id)
+    local room_id = self:_resolve_radio_room_id()
+    return self:_request("GET", "v2/servers/" .. tostring(resolved_community_id) .. "/rooms/" .. tostring(room_id) .. "/users/" .. self:_encode_path_segment(identity))
+  end
+  instance.setUserChannelsV2 = function(self, identity, options, community_id)
+    local resolved_community_id = self:_resolve_radio_community_id(community_id)
+    local room_id = self:_resolve_radio_room_id()
+    return self:_request("PATCH", "v2/servers/" .. tostring(resolved_community_id) .. "/rooms/" .. tostring(room_id) .. "/users/" .. self:_encode_path_segment(identity) .. "/channels", {
+      body = self:_with_radio_room_id(options or {})
     })
   end
   instance.setUserDisplayNameV2 = function(self, data)
-    local resolved_server_id = self:_resolve_server_path_id(data and data.serverId)
-    return self:_request("PATCH", "v2/servers/" .. resolved_server_id .. "/users/display-name", {
-      body = strip_keys(data, { "serverId" })
+    local resolved_community_id = self:_resolve_radio_community_id(data and data.communityId)
+    return self:_request("PATCH", "v2/servers/" .. tostring(resolved_community_id) .. "/users/display-name", {
+      body = self:_with_radio_room_id(strip_keys(data, { "serverId", "communityId" }))
     })
   end
-  instance.approveMembersV2 = function(self, acc_ids, server_id)
-    local resolved_server_id = self:_resolve_server_path_id(server_id)
-    return self:_request("POST", "v2/servers/" .. resolved_server_id .. "/members/approve", {
-      body = { accIds = acc_ids }
+  instance.approveMembersV2 = function(self, acc_ids, community_id)
+    local resolved_community_id = self:_resolve_radio_community_id(community_id)
+    return self:_request("POST", "v2/servers/" .. tostring(resolved_community_id) .. "/members/approve", {
+      body = self:_with_radio_room_id({ accIds = acc_ids })
     })
   end
-  instance.kickMembersV2 = function(self, acc_ids, server_id)
-    local resolved_server_id = self:_resolve_server_path_id(server_id)
-    return self:_request("POST", "v2/servers/" .. resolved_server_id .. "/members/kick", {
-      body = { accIds = acc_ids }
+  instance.kickMembersV2 = function(self, acc_ids, community_id)
+    local resolved_community_id = self:_resolve_radio_community_id(community_id)
+    return self:_request("POST", "v2/servers/" .. tostring(resolved_community_id) .. "/members/kick", {
+      body = self:_with_radio_room_id({ accIds = acc_ids })
     })
   end
-  instance.banMembersV2 = function(self, acc_ids, server_id)
-    local resolved_server_id = self:_resolve_server_path_id(server_id)
-    return self:_request("POST", "v2/servers/" .. resolved_server_id .. "/members/ban", {
-      body = { accIds = acc_ids }
+  instance.banMembersV2 = function(self, acc_ids, community_id)
+    local resolved_community_id = self:_resolve_radio_community_id(community_id)
+    return self:_request("POST", "v2/servers/" .. tostring(resolved_community_id) .. "/members/ban", {
+      body = self:_with_radio_room_id({ accIds = acc_ids })
     })
   end
-  instance.setMemberDisplayNamesV2 = function(self, acc_nicknames, server_id)
-    local resolved_server_id = self:_resolve_server_path_id(server_id)
-    return self:_request("PATCH", "v2/servers/" .. resolved_server_id .. "/members/display-names", {
-      body = { accNicknames = acc_nicknames }
+  instance.unbanMembersV2 = function(self, acc_ids, community_id)
+    local resolved_community_id = self:_resolve_radio_community_id(community_id)
+    return self:_request("POST", "v2/servers/" .. tostring(resolved_community_id) .. "/members/unban", {
+      body = self:_with_radio_room_id({ accIds = acc_ids })
     })
   end
-  instance.setMemberPermissionsV2 = function(self, user_perms, server_id)
-    local resolved_server_id = self:_resolve_server_path_id(server_id)
-    return self:_request("PATCH", "v2/servers/" .. resolved_server_id .. "/members/permissions", {
-      body = { userPerms = user_perms }
+  instance.setMemberDisplayNamesV2 = function(self, acc_nicknames, community_id)
+    local resolved_community_id = self:_resolve_radio_community_id(community_id)
+    return self:_request("PATCH", "v2/servers/" .. tostring(resolved_community_id) .. "/members/display-names", {
+      body = self:_with_radio_room_id({ accNicknames = acc_nicknames })
+    })
+  end
+  instance.setMemberPermissionsV2 = function(self, user_perms, community_id)
+    local resolved_community_id = self:_resolve_radio_community_id(community_id)
+    return self:_request("PATCH", "v2/servers/" .. tostring(resolved_community_id) .. "/members/permissions", {
+      body = self:_with_radio_room_id({ userPerms = user_perms })
     })
   end
   instance.getServerSubscriptionFromIpV2 = function(self)
@@ -1137,26 +1228,25 @@ local function create_client(config, adapter)
     })
   end
   instance.setServerIpV2 = function(self, data)
-    local resolved_server_id = self:_resolve_server_path_id(data and data.serverId)
-    return self:_request("POST", "v2/servers/" .. resolved_server_id .. "/server-ip", {
-      body = strip_keys(data, { "serverId", "apiKey", "id", "key" })
+    local resolved_community_id = self:_resolve_radio_community_id(data and data.communityId)
+    local body = strip_keys(data, { "serverId", "communityId" })
+    return self:_request("POST", "v2/servers/" .. tostring(resolved_community_id) .. "/server-ip", {
+      body = self:_with_radio_room_id(body)
     })
   end
-  instance.setInGameSpeakerLocationsV2 = function(self, locations, server_id)
-    local resolved_server_id = self:_resolve_server_path_id(server_id)
-    return self:_request("PUT", "v2/servers/" .. resolved_server_id .. "/speakers", {
-      body = { locations = locations }
+  instance.setInGameSpeakerLocationsV2 = function(self, locations, community_id)
+    local resolved_community_id = self:_resolve_radio_community_id(community_id)
+    return self:_request("PUT", "v2/servers/" .. tostring(resolved_community_id) .. "/speakers", {
+      body = self:_with_radio_room_id({ locations = locations })
     })
   end
-  instance.playToneV2 = function(self, room_id, tones, play_to, server_id)
-    local resolved_server_id = self:_resolve_server_path_id(server_id)
-    self:_assert_positive_integer(room_id, "roomId")
-    return self:_request("POST", "v2/servers/" .. resolved_server_id .. "/tones/play", {
-      body = {
-        roomId = room_id,
+  instance.playToneV2 = function(self, tones, play_to, community_id)
+    local resolved_community_id = self:_resolve_radio_community_id(community_id)
+    return self:_request("POST", "v2/servers/" .. tostring(resolved_community_id) .. "/tones/play", {
+      body = self:_with_radio_room_id({
         tones = tones,
         playTo = play_to
-      }
+      })
     })
   end
 
@@ -1333,7 +1423,8 @@ local function create_client(config, adapter)
   end
 
   local public_methods = {
-    setLogLevel = Client.setLogLevel
+    setLogLevel = Client.setLogLevel,
+    setRoomId = Client.setRoomId,
   }
 
   for key, value in pairs(instance) do

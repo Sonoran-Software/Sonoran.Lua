@@ -68,6 +68,7 @@ local sonoran = exports["Sonoran.lua"]:createClient({
 })
 
 sonoran:setLogLevel(Sonoran.logLevels.DEBUG)
+sonoran:setRoomId(1)
 ```
 
 Roblox usage:
@@ -89,10 +90,11 @@ sonoran:setLogLevel(Sonoran.logLevels.DEBUG)
 ### Config
 
 - `apiKey`: required for authenticated endpoints.
-- `product`: required; currently must be `Sonoran.productEnums.CAD`.
+- `product`: required; use `Sonoran.productEnums.CAD`, `Sonoran.productEnums.CMS`, or `Sonoran.productEnums.RADIO`.
 - `communityId`: optional; used by `getLoginPageV2()` when no explicit `communityId` is supplied.
 - `apiUrl`: optional; defaults to `https://api.sonorancad.com`.
-- `defaultServerId`: optional; defaults to `1`.
+- `defaultServerId`: optional; defaults to `1` for CAD/CMS-style server-scoped helpers. Radio v2 helpers resolve the community route from `communityId`.
+- `roomId`: optional for CAD/CMS and required for Radio v2 room-scoped helpers.
 - `headers`: optional extra headers merged into every request.
 - `timeoutMs`: optional timeout for the FiveM adapter; defaults to `30000`.
 - `logLevel`: optional; `Sonoran.logLevels.ERROR` by default. Supported values are `OFF`, `ERROR`, and `DEBUG`.
@@ -103,6 +105,12 @@ Use `setLogLevel()` to toggle HTTP debug output at runtime:
 
 ```lua
 sonoran:setLogLevel(Sonoran.logLevels.DEBUG)
+```
+
+Use `setRoomId()` to update the Radio room used by later room-scoped requests without creating a new client:
+
+```lua
+sonoran:setRoomId(1)
 ```
 
 Use `ERROR` to only print failed requests and rate-limit events:
@@ -212,6 +220,7 @@ All CAD v2 helpers are available under `client.cad.*`. The root-level methods ar
 - `authorizeStreetSignsV2(serverId?)`
 - `setPostalsV2(postals)`
 - `sendPhotoV2(data)`
+- `uploadBodycamRecordingV2(data)`
 - `getInfoV2()`
 
 ### Civilian
@@ -255,6 +264,7 @@ All CAD v2 helpers are available under `client.cad.*`. The root-level methods ar
 - `getPagerConfigV2(serverId?)`
 - `setPagerConfigV2(data)`
 - `setStationsV2(config, serverId?)`
+  Sends the provided top-level station payload as-is. Pass `locations`, `tones`, and `unitColors` directly on the request body.
 - `getBlipsV2(serverId?)`
 - `createBlipV2(data)`
 - `updateBlipV2(blipId, data)`
@@ -262,8 +272,9 @@ All CAD v2 helpers are available under `client.cad.*`. The root-level methods ar
 
 ## Notes
 
-- `updateUnitLocationsV2(data)` uses the HTTP v2 endpoint for slower unit location updates, and each update can target `communityUserId` or `roblox`.
-- Unit location updates can target `communityUserId` or `roblox` through the v2 HTTP endpoint.
+- Account-targeted CAD v2 helpers accept `accountUuid`, `communityUserId`, `roblox`, `discord`, and legacy `apiId` where supported by the backend.
+- `updateUnitLocationsV2(data)` uses the HTTP v2 endpoint for slower unit location updates, and each update can target `communityUserId`, `roblox`, or `discord`.
+- Unit location updates can target `communityUserId`, `roblox`, or `discord` through the v2 HTTP endpoint.
 - FiveM uses `PerformHttpRequest`, `promise.new()`, and `Citizen.Await`.
 - Roblox uses `HttpService:RequestAsync()`.
 - Radio, CMS, and legacy CAD endpoints are intentionally out of scope for this initial port.

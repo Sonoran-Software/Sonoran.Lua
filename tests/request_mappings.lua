@@ -159,6 +159,18 @@ local client = create_client({
   timeoutMs = 12345
 }, fake_adapter)
 
+local radio_client = create_client({
+  product = product_enums.RADIO,
+  apiKey = "radio-key",
+  communityId = "radio-community",
+  roomId = 2,
+  apiUrl = "https://api.sonoranradio.com/",
+  headers = {
+    ["X-Test"] = "yes"
+  },
+  timeoutMs = 12345
+}, fake_adapter)
+
 local missing_product_ok, missing_product_error = pcall(create_client, {
   apiKey = "test-key",
   communityId = "community-123"
@@ -167,15 +179,20 @@ assert_equal(missing_product_ok, false, "missing product should fail")
 assert_contains(missing_product_error, "product is required when instancing.", "missing product error")
 
 local unsupported_product_ok, unsupported_product_error = pcall(create_client, {
-  product = product_enums.CMS,
+  product = 99,
   apiKey = "test-key",
   communityId = "community-123"
 }, fake_adapter)
 assert_equal(unsupported_product_ok, false, "unsupported product should fail")
-assert_contains(unsupported_product_error, "Only productEnums.CAD and productEnums.RADIO are currently supported in Sonoran.lua.", "unsupported product error")
+assert_contains(unsupported_product_error, "Only productEnums.CAD, productEnums.CMS, and productEnums.RADIO are currently supported in Sonoran.lua.", "unsupported product error")
 
 assert_truthy(type(client.cad) == "table", "cad namespace exists")
 assert_truthy(client.cad ~= client, "cad namespace is distinct from root client")
+assert_truthy(type(rawget(client.cad, "createRecordV2")) == "function", "cad namespace has concrete methods")
+assert_nil(getmetatable(client.cad), "cad namespace does not require metatable lookup")
+assert_truthy(type(rawget(client.cms, "createRecordV2")) == "function", "cms namespace has concrete methods")
+assert_truthy(type(rawget(radio_client.radio, "getChannelsV2")) == "function", "radio namespace has concrete methods")
+assert_truthy(radio_client.radio ~= radio_client.cad, "radio namespace is distinct from cad namespace")
 
 local invalid_log_level_ok, invalid_log_level_error = pcall(function()
   client:setLogLevel("TRACE")
@@ -326,6 +343,12 @@ local cases = {
     url = "https://api.sonorancad.com/v2/general/version"
   },
   {
+    name = "getTurnCredentialsV2",
+    invoke = function() return client.cad:getTurnCredentialsV2({ userId = "unit/1" }) end,
+    method = "GET",
+    url = "https://api.sonorancad.com/v2/general/turn?userId=unit%2F1"
+  },
+  {
     name = "getServersV2",
     invoke = function() return client.cad:getServersV2() end,
     method = "GET",
@@ -364,6 +387,30 @@ local cases = {
     method = "POST",
     url = "https://api.sonorancad.com/v2/general/photos",
     body = { communityUserId = "1", url = "https://img" }
+  },
+  {
+    name = "uploadBodycamRecordingV2",
+    invoke = function()
+      return client.cad:uploadBodycamRecordingV2({
+        apiId = "1",
+        durationMs = 90000,
+        identId = 123,
+        unitNumber = "1A-12",
+        unitLocation = "Senora Fwy / Route 68",
+        fileName = "bodycam-clip.webm",
+        fileContent = "webm-data"
+      })
+    end,
+    method = "POST",
+    url = "https://api.sonorancad.com/v2/general/bodycam-recordings",
+    assert_request = function(request)
+      assert_equal(request.headers["Authorization"], "Bearer test-key", "uploadBodycamRecordingV2 auth")
+      assert_contains(request.headers["Content-Type"], "multipart/form-data; boundary=----SonoranLuaBodycamBoundary7MA4YWxkTrZu0gW", "uploadBodycamRecordingV2 content type")
+      assert_contains(request.body, 'name="communityUserId"', "uploadBodycamRecordingV2 communityUserId field")
+      assert_contains(request.body, 'name="durationMs"', "uploadBodycamRecordingV2 duration field")
+      assert_contains(request.body, 'name="file"; filename="bodycam-clip.webm"', "uploadBodycamRecordingV2 file field")
+      assert_contains(request.body, "webm-data", "uploadBodycamRecordingV2 file content")
+    end
   },
   {
     name = "getInfoV2",
@@ -451,10 +498,10 @@ local cases = {
   },
   {
     name = "kickUnitV2",
-    invoke = function() return client.cad:kickUnitV2({ serverId = 7, roblox = 123456789, reason = "spam" }) end,
-    method = "DELETE",
+    invoke = function() return client.cad:kickUnitV2({ serverId = 7, discord = "123456789012345678", reason = "spam" }) end,
+    method = "POST",
     url = "https://api.sonorancad.com/v2/emergency/servers/7/units/kick",
-    body = { roblox = 123456789, reason = "spam" }
+    body = { discord = "123456789012345678", reason = "spam" }
   },
   {
     name = "getIdentifiersV2",
@@ -630,10 +677,37 @@ local cases = {
   },
   {
     name = "setStationsV2",
-    invoke = function() return client.cad:setStationsV2({ enabled = true }, 11) end,
+    invoke = function() return client.cad:setStationsV2({ locations = {}, tones = {} }, 11) end,
     method = "PUT",
     url = "https://api.sonorancad.com/v2/emergency/servers/11/stations",
-    body = { config = { enabled = true } }
+    body = { locations = {}, tones = {} }
+  },
+  {
+    name = "setStationsV2 preserves direct payload",
+    invoke = function()
+      return client.cad:setStationsV2({
+        locations = {
+          {
+            name = "Mission Row",
+            icon = "fas fa-building"
+          }
+        },
+        tones = { "tone_station_open.mp3" },
+        unitColors = { "#2563eb" }
+      }, 11)
+    end,
+    method = "PUT",
+    url = "https://api.sonorancad.com/v2/emergency/servers/11/stations",
+    body = {
+      locations = {
+        {
+          name = "Mission Row",
+          icon = "fas fa-building"
+        }
+      },
+      tones = { "tone_station_open.mp3" },
+      unitColors = { "#2563eb" }
+    }
   },
   {
     name = "getBlipsV2",
@@ -695,6 +769,161 @@ for _, case in ipairs(cases) do
   assert_body(case.body, case.name)
   assert_response_shape(response, true, case.name)
 end
+
+local radio_cases = {
+  {
+    name = "radio getConnectedUsersV2",
+    invoke = function() return radio_client.radio:getConnectedUsersV2() end,
+    method = "GET",
+    url = "https://api.sonoranradio.com/v2/servers/radio-community/connected-users"
+  },
+  {
+    name = "radio getConnectedUserV2",
+    invoke = function() return radio_client.radio:getConnectedUserV2("user/1") end,
+    method = "GET",
+    url = "https://api.sonoranradio.com/v2/servers/radio-community/rooms/2/users/user%2F1"
+  },
+  {
+    name = "radio setServerIpV2",
+    invoke = function()
+      return radio_client.radio:setServerIpV2({
+        serverPort = 30120,
+        pushUrl = "http://127.0.0.1:30120/sonoranradio",
+        nickname = "Patrol"
+      })
+    end,
+    method = "POST",
+    url = "https://api.sonoranradio.com/v2/servers/radio-community/server-ip",
+    body = {
+      roomId = 2,
+      serverPort = 30120,
+      pushUrl = "http://127.0.0.1:30120/sonoranradio",
+      nickname = "Patrol"
+    }
+  },
+  {
+    name = "radio approveMembersV2",
+    invoke = function()
+      return radio_client.radio:approveMembersV2({ "user-1" })
+    end,
+    method = "POST",
+    url = "https://api.sonoranradio.com/v2/servers/radio-community/members/approve",
+    body = {
+      roomId = 2,
+      accIds = { "user-1" }
+    }
+  },
+  {
+    name = "radio unbanMembersV2",
+    invoke = function()
+      return radio_client.radio:unbanMembersV2({ "user-1" })
+    end,
+    method = "POST",
+    url = "https://api.sonoranradio.com/v2/servers/radio-community/members/unban",
+    body = {
+      roomId = 2,
+      accIds = { "user-1" }
+    }
+  },
+  {
+    name = "radio playToneV2",
+    invoke = function()
+      return radio_client.radio:playToneV2({ 12 }, { { type = "channel", value = 101 } })
+    end,
+    method = "POST",
+    url = "https://api.sonoranradio.com/v2/servers/radio-community/tones/play",
+    body = {
+      roomId = 2,
+      tones = { 12 },
+      playTo = { { type = "channel", value = 101 } }
+    }
+  }
+}
+
+for _, case in ipairs(radio_cases) do
+  next_response = {
+    ok = true,
+    status = 200,
+    headers = {
+      ["content-type"] = "application/json; charset=utf-8"
+    },
+    body = "json:ok"
+  }
+
+  last_request = nil
+  local response = case.invoke()
+  assert_equal(last_request.method, case.method, case.name .. " method")
+  assert_equal(last_request.url, case.url, case.name .. " url")
+  assert_equal(last_request.timeoutMs, 12345, case.name .. " timeout")
+  assert_equal(last_request.headers["Authorization"], "Bearer radio-key", case.name .. " auth header")
+  assert_equal(last_request.headers["X-Test"], "yes", case.name .. " passthrough header")
+  if case.body ~= nil then
+    assert_equal(last_request.headers["Content-Type"], "application/json", case.name .. " content type")
+  end
+  assert_body(case.body, case.name)
+  assert_response_shape(response, true, case.name)
+end
+
+radio_client:setRoomId(7)
+next_response = {
+  ok = true,
+  status = 200,
+  headers = {
+    ["content-type"] = "application/json; charset=utf-8"
+  },
+  body = "json:ok"
+}
+last_request = nil
+local updated_room_path_response = radio_client.radio:getConnectedUserV2("user/1")
+assert_equal(last_request.url, "https://api.sonoranradio.com/v2/servers/radio-community/rooms/7/users/user%2F1", "setRoomId updates radio path")
+assert_response_shape(updated_room_path_response, true, "setRoomId updates radio path")
+
+next_response = {
+  ok = true,
+  status = 200,
+  headers = {
+    ["content-type"] = "application/json; charset=utf-8"
+  },
+  body = "json:ok"
+}
+last_request = nil
+local updated_room_body_response = radio_client.radio:approveMembersV2({ "user-1" })
+assert_body({
+  roomId = 7,
+  accIds = { "user-1" }
+}, "setRoomId updates radio body")
+assert_response_shape(updated_room_body_response, true, "setRoomId updates radio body")
+
+local invalid_room_ok, invalid_room_error = pcall(function()
+  radio_client:setRoomId(0)
+end)
+assert_equal(invalid_room_ok, false, "invalid setRoomId should fail")
+assert_contains(tostring(invalid_room_error), "roomId must be a positive integer.", "invalid setRoomId error")
+
+local alias_radio_client = create_client({
+  product = product_enums.RADIO,
+  apiKey = "radio-key",
+  communityId = "radio-community",
+  radioRoomId = 9
+}, fake_adapter)
+alias_radio_client.radio = alias_radio_client
+
+next_response = {
+  ok = true,
+  status = 200,
+  headers = {
+    ["content-type"] = "application/json; charset=utf-8"
+  },
+  body = "json:ok"
+}
+last_request = nil
+local alias_room_response = alias_radio_client.radio:playToneV2({ 12 }, { { type = "channel", value = 101 } })
+assert_body({
+  roomId = 9,
+  tones = { 12 },
+  playTo = { { type = "channel", value = 101 } }
+}, "radioRoomId alias updates radio tone body")
+assert_response_shape(alias_room_response, true, "radioRoomId alias updates radio tone body")
 
 next_response = {
   ok = true,
