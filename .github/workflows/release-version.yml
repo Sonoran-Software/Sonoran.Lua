@@ -121,3 +121,20 @@ jobs:
             -H "Authorization: Bearer $DISPATCH_TOKEN" \
             https://api.github.com/repos/Sonoran-Software/SonoranCADFiveM/dispatches \
             -d '{"event_type":"sonoran-lua-updated","client_payload":{"source_repository":"Sonoran-Software/Sonoran.Lua","source_ref":"master","source_version":"v${{ steps.version.outputs.version }}"}}'
+
+      - name: Dispatch radio_fivem sync
+        if: success()
+        env:
+          DISPATCH_TOKEN: ${{ secrets.FIVEM_INTEGRATION_TRIGGER_TOKEN }}
+        run: |
+          if [ -z "$DISPATCH_TOKEN" ]; then
+            echo "FIVEM_INTEGRATION_TRIGGER_TOKEN is not configured; skipping radio_fivem sync dispatch."
+            exit 0
+          fi
+
+          curl --fail --silent --show-error \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $DISPATCH_TOKEN" \
+            https://api.github.com/repos/Sonoran-Software/radio_fivem/dispatches \
+            -d '{"event_type":"sonoran-lua-updated","client_payload":{"source_repository":"Sonoran-Software/Sonoran.Lua","source_ref":"master","source_version":"v${{ steps.version.outputs.version }}"}}'
