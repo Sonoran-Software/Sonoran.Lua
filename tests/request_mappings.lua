@@ -8,7 +8,8 @@ local product_enums = {
 
 local decode_map = {
   ["json:ok"] = { ok = true },
-  ["json:error"] = { error = "bad request" }
+  ["json:error"] = { error = "bad request" },
+  ["json:server-ip"] = { roomId = 12, pushUrl = "http://127.0.0.1:30120/sonoranradio/events" }
 }
 
 local last_request
@@ -169,6 +170,13 @@ local radio_client = create_client({
     ["X-Test"] = "yes"
   },
   timeoutMs = 12345
+}, fake_adapter)
+
+local radio_client_without_room = create_client({
+  product = product_enums.RADIO,
+  apiKey = "radio-key",
+  communityId = "radio-community",
+  apiUrl = "https://api.sonoranradio.com/"
 }, fake_adapter)
 
 local missing_product_ok, missing_product_error = pcall(create_client, {
@@ -863,6 +871,41 @@ for _, case in ipairs(radio_cases) do
   assert_body(case.body, case.name)
   assert_response_shape(response, true, case.name)
 end
+
+next_response = {
+  ok = true,
+  status = 200,
+  headers = {
+    ["content-type"] = "application/json; charset=utf-8"
+  },
+  body = "json:server-ip"
+}
+last_request = nil
+local resolved_room_response = radio_client_without_room.radio:setServerIpV2({
+  serverPort = 30120,
+  pushUrl = "http://127.0.0.1:30120/sonoranradio",
+  nickname = "Patrol"
+})
+assert_equal(last_request.url, "https://api.sonoranradio.com/v2/servers/radio-community/server-ip", "radio setServerIpV2 without configured room url")
+assert_body({
+  serverPort = 30120,
+  pushUrl = "http://127.0.0.1:30120/sonoranradio",
+  nickname = "Patrol"
+}, "radio setServerIpV2 without configured room")
+assert_equal(resolved_room_response.data.roomId, 12, "radio setServerIpV2 returned roomId")
+
+next_response = {
+  ok = true,
+  status = 200,
+  headers = {
+    ["content-type"] = "application/json; charset=utf-8"
+  },
+  body = "json:ok"
+}
+last_request = nil
+local resolved_room_path_response = radio_client_without_room.radio:getConnectedUserV2("user/1")
+assert_equal(last_request.url, "https://api.sonoranradio.com/v2/servers/radio-community/rooms/12/users/user%2F1", "setServerIpV2 stores returned roomId")
+assert_response_shape(resolved_room_path_response, true, "setServerIpV2 stores returned roomId")
 
 radio_client:setRoomId(7)
 next_response = {
