@@ -26,6 +26,22 @@ local function perform_request(options, callback)
   )
 end
 
+local function resolve_response_parts(body, headers, extra)
+  if type(body) == "table" and type(headers) == "string" then
+    return headers, body
+  end
+
+  if type(headers) ~= "table" and type(extra) == "table" then
+    return body, extra
+  end
+
+  if type(headers) == "table" then
+    return body, headers
+  end
+
+  return body, {}
+end
+
 return function()
   return {
     encode = function(value)
@@ -83,12 +99,13 @@ return function()
 
       perform_request(
         options,
-        function(status_code, body, headers)
+        function(status_code, body, headers, extra)
+          local resolved_body, resolved_headers = resolve_response_parts(body, headers, extra)
           settle({
             ok = type(status_code) == "number" and status_code >= 200 and status_code < 300,
             status = status_code or 0,
-            headers = headers or {},
-            body = body
+            headers = resolved_headers,
+            body = resolved_body
           })
         end
       )

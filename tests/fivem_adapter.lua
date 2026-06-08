@@ -134,5 +134,31 @@ assert_equal(direct_response.status, 202, "direct response status")
 assert_equal(direct_response.body, "direct", "direct response body")
 assert_equal(direct_response.headers.source, "direct", "direct response headers")
 
+PerformHttpRequest = function(url, callback, method, body, headers)
+  callback(203, { source = "swapped" }, "swapped-body")
+end
+
+local swapped_response = adapter.request({
+  url = "https://example.com/swapped",
+  headers = {}
+})
+
+assert_equal(swapped_response.status, 203, "swapped response status")
+assert_equal(swapped_response.body, "swapped-body", "swapped response body")
+assert_equal(swapped_response.headers.source, "swapped", "swapped response headers")
+
+PerformHttpRequest = function(url, callback, method, body, headers)
+  callback(204, "", "transport failure", { source = "fourth-arg" })
+end
+
+local fourth_arg_response = adapter.request({
+  url = "https://example.com/fourth-arg",
+  headers = {}
+})
+
+assert_equal(fourth_arg_response.status, 204, "fourth arg response status")
+assert_equal(fourth_arg_response.body, "", "fourth arg response body")
+assert_equal(fourth_arg_response.headers.source, "fourth-arg", "fourth arg response headers")
+
 restore_globals(previous_globals)
 print("fivem adapter tests passed")

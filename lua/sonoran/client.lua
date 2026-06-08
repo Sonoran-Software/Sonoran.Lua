@@ -186,6 +186,10 @@ end
 
 local function normalize_headers(headers)
   local normalized = {}
+  if type(headers) ~= "table" then
+    return normalized
+  end
+
   for key, value in pairs(headers or {}) do
     normalized[string.lower(tostring(key))] = value
   end
