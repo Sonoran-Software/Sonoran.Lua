@@ -793,7 +793,7 @@ local function create_client(config, adapter)
       roomId = config and (config.radioRoomId or config.roomId) or nil,
       headers = shallow_copy(config and config.headers or {}),
       timeoutMs = config and config.timeoutMs or 30000,
-      quietPrint = config and config.quietPrint or nil,
+      quietPrint = config and config.quietPrint,
       logLevel = LOG_LEVELS.ERROR
     }
   }, Client)

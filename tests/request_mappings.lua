@@ -179,6 +179,18 @@ local radio_client_without_room = create_client({
   apiUrl = "https://api.sonoranradio.com/"
 }, fake_adapter)
 
+local convar_quiet_override_client = create_client({
+  product = product_enums.CAD,
+  apiKey = "test-key",
+  communityId = "community-123",
+  apiUrl = "https://api.sonorancad.com/",
+  quietPrint = false,
+  headers = {
+    ["X-Test"] = "yes"
+  },
+  timeoutMs = 12345
+}, fake_adapter)
+
 local missing_product_ok, missing_product_error = pcall(create_client, {
   apiKey = "test-key",
   communityId = "community-123"
@@ -1132,6 +1144,32 @@ local off_logs, off_response = capture_prints(function()
 end)
 assert_response_shape(off_response, true, "off logging response")
 assert_equal(#off_logs, 0, "off logging lines")
+
+local original_get_convar = GetConvar
+GetConvar = function(name, default)
+  if name == "sonoran_quietPrint" then
+    return "true"
+  end
+
+  return default
+end
+
+convar_quiet_override_client:setLogLevel("DEBUG")
+local quiet_override_logs, quiet_override_response = capture_prints(function()
+  next_response = {
+    ok = true,
+    status = 200,
+    headers = {
+      ["content-type"] = "application/json"
+    },
+    body = "json:ok"
+  }
+  return convar_quiet_override_client.cad:getVersionV2()
+end)
+GetConvar = original_get_convar
+assert_response_shape(quiet_override_response, true, "quietPrint false override response")
+assert_at_least(#quiet_override_logs, 10, "quietPrint false override logging lines")
+assert_contains(table.concat(quiet_override_logs, "\n"), "HTTP request", "quietPrint false override request marker")
 
 next_response = {
   ok = false,
