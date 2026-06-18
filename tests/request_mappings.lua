@@ -798,6 +798,12 @@ local radio_cases = {
     url = "https://api.sonoranradio.com/v2/servers/radio-community/connected-users"
   },
   {
+    name = "radio getTransmissionsV2",
+    invoke = function() return radio_client.radio:getTransmissionsV2({ page = 1, perPage = 25 }) end,
+    method = "GET",
+    url = "https://api.sonoranradio.com/v2/servers/radio-community/transmissions?page=1&perPage=25"
+  },
+  {
     name = "radio getConnectedUserV2",
     invoke = function() return radio_client.radio:getConnectedUserV2("user/1") end,
     method = "GET",
