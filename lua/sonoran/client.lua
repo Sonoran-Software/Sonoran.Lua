@@ -885,10 +885,11 @@ local function create_client(config, adapter)
   instance.getTurnCredentialsV2 = function(self, query)
     return self:_request("GET", "v2/general/turn", { query = query or {} })
   end
-  instance.getServersV2 = function(self)
+  local cad_get_servers_v2 = function(self)
     return self:_request("GET", "v2/general/servers")
   end
-  instance.setServersV2 = function(self, servers, deploy_map)
+  instance.getServersV2 = cad_get_servers_v2
+  local cad_set_servers_v2 = function(self, servers, deploy_map)
     return self:_request("PUT", "v2/general/servers", {
       body = {
         servers = servers,
@@ -896,6 +897,7 @@ local function create_client(config, adapter)
       }
     })
   end
+  instance.setServersV2 = cad_set_servers_v2
   instance.verifySecretV2 = function(self, secret)
     return self:_request("POST", "v2/general/secrets/verify", { body = { secret = secret } })
   end
@@ -1479,6 +1481,12 @@ local function create_client(config, adapter)
   end
   instance.cancelSessionV2 = function(self, data)
     return self:_request("DELETE", "v2/community/sessions", { body = data })
+  end
+
+  if product == 0 then
+    -- CMS server helpers share these public names, so restore the CAD routes when this client is created for CAD.
+    instance.getServersV2 = cad_get_servers_v2
+    instance.setServersV2 = cad_set_servers_v2
   end
 
   local public_methods = {
