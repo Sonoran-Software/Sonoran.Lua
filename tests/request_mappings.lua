@@ -343,6 +343,13 @@ local cases = {
     body = { communityUserId = "u1" }
   },
   {
+    name = "setCommunityLinkV2",
+    invoke = function() return client.cad:setCommunityLinkV2({ accountUuid = "account-uuid", secretUuid = "secret-uuid", communityUserId = "u1" }) end,
+    method = "POST",
+    url = "https://api.sonorancad.com/v2/general/links/set",
+    body = { accountUuid = "account-uuid", secretUuid = "secret-uuid", communityUserId = "u1" }
+  },
+  {
     name = "setAccountPermissionsV2",
     invoke = function() return client.cad:setAccountPermissionsV2({ apiId = "1", add = { "A", "B" } }) end,
     method = "PATCH",

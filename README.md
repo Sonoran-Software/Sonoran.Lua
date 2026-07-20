@@ -211,6 +211,7 @@ All CAD v2 helpers are available under `client.cad.*`. The root-level methods ar
 - `getAccountsV2(query?)`
 - `createCommunityLinkV2(data)`
 - `checkCommunityLinkV2(data)`
+- `setCommunityLinkV2(data)`
 - `setAccountPermissionsV2(data)`
 - `heartbeatV2(serverId, playerCount)`
 - `getVersionV2()`
