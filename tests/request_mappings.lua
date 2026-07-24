@@ -256,6 +256,12 @@ local cases = {
     body = { codes = { "A", "B" } }
   },
   {
+    name = "getPenalCodesV2",
+    invoke = function() return client.cad:getPenalCodesV2() end,
+    method = "GET",
+    url = "https://api.sonorancad.com/v2/general/penal-codes"
+  },
+  {
     name = "setApiIdsV2",
     invoke = function() return client.cad:setApiIdsV2({ username = "u", apiIds = { "1", "2" } }) end,
     method = "PUT",

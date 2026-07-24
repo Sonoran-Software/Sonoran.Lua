@@ -197,6 +197,7 @@ All CAD v2 helpers are available under `client.cad.*`. The root-level methods ar
 - `checkApiIdV2(apiId)`
 - `applyPermissionKeyV2(data)`
 - `banUserV2(data)`
+- `getPenalCodesV2()`
 - `setPenalCodesV2(codes)`
 - `setApiIdsV2(data)`
 - `getTemplatesV2(recordTypeId?)`

@@ -848,6 +848,9 @@ local function create_client(config, adapter)
   instance.banUserV2 = function(self, data)
     return self:_request("POST", "v2/general/account-bans", { body = normalize_v2_target_aliases(data) })
   end
+  instance.getPenalCodesV2 = function(self)
+    return self:_request("GET", "v2/general/penal-codes")
+  end
   instance.setPenalCodesV2 = function(self, codes)
     return self:_request("PUT", "v2/general/penal-codes", { body = { codes = codes } })
   end
