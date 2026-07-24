@@ -5,7 +5,7 @@ lua54 'yes'
 name 'Sonoran.lua'
 author 'Sonoran Software'
 description 'FiveM-first Lua SDK for Sonoran CAD v2 endpoints.'
-version '0.1.57'
+version '0.1.58'
 
 server_scripts {
   'lua/sonoran/init.lua'
