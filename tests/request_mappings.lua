@@ -619,11 +619,30 @@ local cases = {
     url = "https://api.sonorancad.com/v2/emergency/servers/4/calls/911/12"
   },
   {
+    name = "getDispatchTemplatesV2",
+    invoke = function() return client.cad:getDispatchTemplatesV2() end,
+    method = "GET",
+    url = "https://api.sonorancad.com/v2/emergency/dispatch-templates"
+  },
+  {
+    name = "getDispatchTemplateV2",
+    invoke = function() return client.cad:getDispatchTemplatesV2(3) end,
+    method = "GET",
+    url = "https://api.sonorancad.com/v2/emergency/dispatch-templates/3"
+  },
+  {
     name = "createDispatchCallV2",
     invoke = function() return client.cad:createDispatchCallV2({ serverId = 11, origin = 1, status = 2, priority = 1, block = "123", address = "Main", postal = "100", title = "Call", code = "TS", description = "desc", notes = {} }) end,
     method = "POST",
     url = "https://api.sonorancad.com/v2/emergency/servers/11/dispatch-calls",
     body = { origin = 1, status = 2, priority = 1, block = "123", address = "Main", postal = "100", title = "Call", code = "TS", description = "desc", notes = {} }
+  },
+  {
+    name = "createCustomDispatchCallV2",
+    invoke = function() return client.cad:createCustomDispatchCallV2({ serverId = 11, templateId = 3, values = { status = "active", description = "desc" }, identIds = { 42 } }) end,
+    method = "POST",
+    url = "https://api.sonorancad.com/v2/emergency/servers/11/custom-dispatch-calls",
+    body = { templateId = 3, values = { status = "active", description = "desc" }, identIds = { 42 } }
   },
   {
     name = "updateDispatchCallV2",

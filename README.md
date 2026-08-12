@@ -252,7 +252,9 @@ All CAD v2 helpers are available under `client.cad.*`. The root-level methods ar
 - `addIdentifiersToGroupV2(data)`
 - `createEmergencyCallV2(data)`
 - `deleteEmergencyCallV2(callId, serverId?)`
+- `getDispatchTemplatesV2(templateId?)`
 - `createDispatchCallV2(data)`
+- `createCustomDispatchCallV2(data)`
 - `updateDispatchCallV2(callId, data)`
 - `attachUnitsToDispatchCallV2(callId, data)`
 - `detachUnitsFromDispatchCallV2(data)`
