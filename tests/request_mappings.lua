@@ -211,7 +211,7 @@ assert_truthy(client.cad ~= client, "cad namespace is distinct from root client"
 assert_truthy(type(rawget(client.cad, "createRecordV2")) == "function", "cad namespace has concrete methods")
 assert_nil(getmetatable(client.cad), "cad namespace does not require metatable lookup")
 assert_truthy(type(rawget(client.cms, "createRecordV2")) == "function", "cms namespace has concrete methods")
-assert_truthy(type(rawget(radio_client.radio, "getChannelsV2")) == "function", "radio namespace has concrete methods")
+assert_truthy(type(rawget(radio_client.radio, "getCommunityChannelsV2")) == "function", "radio namespace has concrete methods")
 assert_truthy(radio_client.radio ~= radio_client.cad, "radio namespace is distinct from cad namespace")
 
 local invalid_log_level_ok, invalid_log_level_error = pcall(function()
@@ -823,6 +823,54 @@ for _, case in ipairs(cases) do
 end
 
 local radio_cases = {
+  {
+    name = "radio getZonesV2",
+    invoke = function() return radio_client.radio:getZonesV2() end,
+    method = "GET",
+    url = "https://api.sonoranradio.com/v2/servers/radio-community/rooms/2/zones"
+  },
+  {
+    name = "radio createZoneV2",
+    invoke = function()
+      return radio_client.radio:createZoneV2("geo", {
+        points = { { x = 0, y = 0 }, { x = 1, y = 0 }, { x = 1, y = 1 } },
+        options = { name = "Test", minZ = 0, maxZ = 10, transmitChannels = {}, scanChannels = {}, acePerms = {} }
+      })
+    end,
+    method = "POST",
+    url = "https://api.sonoranradio.com/v2/servers/radio-community/rooms/2/zones/geo",
+    body = {
+      roomId = 2,
+      zone = {
+        points = { { x = 0, y = 0 }, { x = 1, y = 0 }, { x = 1, y = 1 } },
+        options = { name = "Test", minZ = 0, maxZ = 10, transmitChannels = {}, scanChannels = {}, acePerms = {} }
+      }
+    }
+  },
+  {
+    name = "radio updateZoneV2",
+    invoke = function()
+      return radio_client.radio:updateZoneV2("geo", "Test Zone", {
+        points = { { x = 0, y = 0 }, { x = 1, y = 0 }, { x = 1, y = 1 } },
+        options = { name = "Test Zone", minZ = 0, maxZ = 10, transmitChannels = {}, scanChannels = {}, acePerms = {} }
+      })
+    end,
+    method = "PATCH",
+    url = "https://api.sonoranradio.com/v2/servers/radio-community/rooms/2/zones/geo/Test%20Zone",
+    body = {
+      roomId = 2,
+      zone = {
+        points = { { x = 0, y = 0 }, { x = 1, y = 0 }, { x = 1, y = 1 } },
+        options = { name = "Test Zone", minZ = 0, maxZ = 10, transmitChannels = {}, scanChannels = {}, acePerms = {} }
+      }
+    }
+  },
+  {
+    name = "radio deleteZoneV2",
+    invoke = function() return radio_client.radio:deleteZoneV2("geo", "Test Zone") end,
+    method = "DELETE",
+    url = "https://api.sonoranradio.com/v2/servers/radio-community/rooms/2/zones/geo/Test%20Zone"
+  },
   {
     name = "radio getConnectedUsersV2",
     invoke = function() return radio_client.radio:getConnectedUsersV2() end,
