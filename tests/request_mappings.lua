@@ -890,6 +890,12 @@ local radio_cases = {
     url = "https://api.sonoranradio.com/v2/servers/radio-community/rooms/2/users/user%2F1"
   },
   {
+    name = "radio getServerSubscriptionV2",
+    invoke = function() return radio_client.radio:getServerSubscriptionV2() end,
+    method = "GET",
+    url = "https://api.sonoranradio.com/v2/servers/radio-community/subscription"
+  },
+  {
     name = "radio setServerIpV2",
     invoke = function()
       return radio_client.radio:setServerIpV2({
