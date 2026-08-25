@@ -788,6 +788,51 @@ local cases = {
     url = "https://api.sonorancad.com/v2/emergency/servers/11/blips/delete",
     body = { ids = { 21, 22 } }
   },
+  {
+    name = "getIntegrationPanelsV2",
+    invoke = function() return client.cad:getIntegrationPanelsV2() end,
+    method = "GET",
+    url = "https://api.sonorancad.com/v2/integration-panels"
+  },
+  {
+    name = "getIntegrationPanelV2",
+    invoke = function() return client.cad:getIntegrationPanelV2("doors/main") end,
+    method = "GET",
+    url = "https://api.sonorancad.com/v2/integration-panels/doors%2Fmain"
+  },
+  {
+    name = "setIntegrationPanelV2",
+    invoke = function() return client.cad:setIntegrationPanelV2("doors", { schemaVersion = 1, name = "Door Locks", body = {} }) end,
+    method = "PUT",
+    url = "https://api.sonorancad.com/v2/integration-panels/doors",
+    body = { definition = { schemaVersion = 1, name = "Door Locks", body = {} } }
+  },
+  {
+    name = "deleteIntegrationPanelV2",
+    invoke = function() return client.cad:deleteIntegrationPanelV2("doors") end,
+    method = "DELETE",
+    url = "https://api.sonorancad.com/v2/integration-panels/doors"
+  },
+  {
+    name = "setIntegrationPanelStateV2",
+    invoke = function() return client.cad:setIntegrationPanelStateV2("doors", "mission-row", { locked = true }, 11) end,
+    method = "PUT",
+    url = "https://api.sonorancad.com/v2/integration-panels/servers/11/panels/doors/instances/mission-row/state",
+    body = { state = { locked = true } }
+  },
+  {
+    name = "getIntegrationPanelActionsV2",
+    invoke = function() return client.cad:getIntegrationPanelActionsV2("doors", { serverId = 11, after = 42, limit = 25 }) end,
+    method = "GET",
+    url = "https://api.sonorancad.com/v2/integration-panels/servers/11/panels/doors/actions?after=42&limit=25"
+  },
+  {
+    name = "acknowledgeIntegrationPanelActionV2",
+    invoke = function() return client.cad:acknowledgeIntegrationPanelActionV2("doors", "event/1", { serverId = 11, success = true, message = "Locked", result = { locked = true } }) end,
+    method = "POST",
+    url = "https://api.sonorancad.com/v2/integration-panels/servers/11/panels/doors/actions/event%2F1/ack",
+    body = { success = true, message = "Locked", result = { locked = true } }
+  },
 }
 
 for _, case in ipairs(cases) do
