@@ -262,6 +262,12 @@ local cases = {
     url = "https://api.sonorancad.com/v2/general/penal-codes"
   },
   {
+    name = "getDatabaseSyncConfigurationV2",
+    invoke = function() return client.cad:getDatabaseSyncConfigurationV2() end,
+    method = "GET",
+    url = "https://api.sonorancad.com/v2/general/database-sync"
+  },
+  {
     name = "setApiIdsV2",
     invoke = function() return client.cad:setApiIdsV2({ username = "u", apiIds = { "1", "2" } }) end,
     method = "PUT",
