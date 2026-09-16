@@ -282,3 +282,17 @@ All CAD v2 helpers are available under `client.cad.*`. The root-level methods ar
 - FiveM uses `PerformHttpRequest`, `promise.new()`, and `Citizen.Await`.
 - Roblox uses `HttpService:RequestAsync()`.
 - Radio, CMS, and legacy CAD endpoints are intentionally out of scope for this initial port.
+
+## Granular CAD permissions (v2)
+
+Use `getPermissionCatalogV2`, `getAccountPermissionsV2`, and `replaceAccountPermissionsV2` for new permission integrations. The existing `setAccountPermissionsV2` remains a legacy category adapter.
+
+```lua
+local catalog = sonoran.cad:getPermissionCatalogV2()
+local account = sonoran.cad:getAccountPermissionsV2(accountUuid)
+local response = sonoran.cad:replaceAccountPermissionsV2(accountUuid, { "global.police" })
+-- Clear all grants explicitly:
+local cleared = sonoran.cad:replaceAccountPermissionsV2(accountUuid, {})
+```
+
+Use the account UUID, not a community user ID, in these calls. Fetch the community catalog for exact, case-sensitive grant IDs and template IDs; `legacyGrants` maps uppercase legacy flags to current grants. Replacement overwrites the full grant list (version 2), and an empty list clears it. Never treat a failed read as an empty list. Only pending or active non-owner accounts can be edited. Nonempty grants activate pending accounts subject to the member limit; empty grants make active accounts pending. A granular save ends legacy category inheritance for future record templates.

@@ -362,6 +362,25 @@ local cases = {
     body = { accountUuid = "account-uuid", secretUuid = "secret-uuid", communityUserId = "u1" }
   },
   {
+    name = "getPermissionCatalogV2",
+    invoke = function() return client.cad:getPermissionCatalogV2() end,
+    method = "GET",
+    url = "https://api.sonorancad.com/v2/general/permissions/catalog"
+  },
+  {
+    name = "getAccountPermissionsV2",
+    invoke = function() return client.cad:getAccountPermissionsV2("account/uuid") end,
+    method = "GET",
+    url = "https://api.sonorancad.com/v2/general/permissions/accounts/account%2Fuuid"
+  },
+  {
+    name = "replaceAccountPermissionsV2",
+    invoke = function() return client.cad:replaceAccountPermissionsV2("account-uuid", { "global.police" }) end,
+    method = "PUT",
+    url = "https://api.sonorancad.com/v2/general/permissions/accounts/account-uuid",
+    body = { version = 2, grants = { "global.police" } }
+  },
+  {
     name = "setAccountPermissionsV2",
     invoke = function() return client.cad:setAccountPermissionsV2({ apiId = "1", add = { "A", "B" } }) end,
     method = "PATCH",
@@ -1325,5 +1344,14 @@ next_response = {
 local text_failure = client.cad:getInfoV2()
 assert_equal(text_failure.success, false, "plain text failure success")
 assert_equal(text_failure.reason, "plain error", "plain text failure reason")
+
+next_response = { ok = true, status = 200, headers = {}, body = "" }
+client.cad:replaceAccountPermissionsV2("account/uuid", {})
+assert_equal(last_request.method, "PUT", "clear grants method")
+assert_equal(last_request.url, "https://api.sonorancad.com/v2/general/permissions/accounts/account%2Fuuid", "clear grants path")
+assert_equal(last_request.headers["Content-Type"], "application/json", "clear grants content type")
+assert_equal(last_request.body, '{"version":2,"grants":[]}', "clear grants JSON array")
+assert_equal(pcall(function() client.cad:replaceAccountPermissionsV2("account", nil) end), false, "missing grants rejected")
+assert_equal(pcall(function() client.cad:replaceAccountPermissionsV2("account", { police = true }) end), false, "object grants rejected")
 
 print("All Sonoran.lua request mapping tests passed.")
