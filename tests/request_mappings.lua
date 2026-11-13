@@ -440,6 +440,13 @@ local cases = {
     body = { postals = { { postal = "100" } } }
   },
   {
+    name = "sendPhotoV2 file batch",
+    invoke = function() return client.cad:sendPhotoV2({ communityUserId = "1", urls = { "https://cdn.example/a", "https://cdn.example/b" }, fileType = "pdf" }) end,
+    method = "POST",
+    url = "https://api.sonorancad.com/v2/general/photos",
+    body = { communityUserId = "1", urls = { "https://cdn.example/a", "https://cdn.example/b" }, fileType = "pdf" }
+  },
+  {
     name = "sendPhotoV2",
     invoke = function() return client.cad:sendPhotoV2({ apiId = "1", url = "https://img" }) end,
     method = "POST",
