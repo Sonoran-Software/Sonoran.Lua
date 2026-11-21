@@ -1,6 +1,6 @@
 local create_client = dofile("lua/sonoran/client.lua")
 local last_request
-local client = create_client({ product = 0, communityId = "test-community", apiKey = "test-key", defaultServerId = 7 }, {
+local client = create_client({ product = 0, apiKey = "test-key", defaultServerId = 7 }, {
   encode = function(value) return { json = value } end,
   decode = function() return {} end,
   encodeURIComponent = function(value)

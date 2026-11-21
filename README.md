@@ -60,7 +60,6 @@ local Sonoran = require("sonoran")
 local sonoran = exports["Sonoran.lua"]:createClient({
   product = Sonoran.productEnums.CAD,
   apiKey = "your-cad-api-key",
-  communityId = "your-community-id",
   apiUrl = "https://api.sonorancad.com",
   defaultServerId = 1,
   timeoutMs = 30000,
@@ -77,7 +76,6 @@ Roblox usage:
 local sonoran = Sonoran.createClient({
   product = Sonoran.productEnums.CAD,
   apiKey = "your-cad-api-key",
-  communityId = "your-community-id",
   apiUrl = "https://api.sonorancad.com",
   defaultServerId = 1,
   timeoutMs = 30000,
@@ -91,7 +89,7 @@ sonoran:setLogLevel(Sonoran.logLevels.DEBUG)
 
 - `apiKey`: required for authenticated endpoints.
 - `product`: required; use `Sonoran.productEnums.CAD`, `Sonoran.productEnums.CMS`, or `Sonoran.productEnums.RADIO`.
-- `communityId`: optional; used by `getLoginPageV2()` when no explicit `communityId` is supplied.
+- `communityId`: optional for CAD v2. Set it to provide the default ID for public `getLoginPageV2()` lookups. Radio v2 routes use the community ID.
 - `apiUrl`: optional; defaults to `https://api.sonorancad.com`.
 - `defaultServerId`: optional; defaults to `1` for CAD/CMS-style server-scoped helpers. Radio v2 helpers resolve the community route from `communityId`.
 - `roomId`: optional for CAD/CMS and required for Radio v2 room-scoped helpers.
